@@ -1,35 +1,46 @@
 import "./App.css";
-import { useEffect, useState } from "react";
-import Player1 from "./Player1";
-import Player2 from "./Player2";
+import { useEffect, useRef, useState } from "react";
+import BattleScreen from "./components/BattleScreen.tsx";
 
 export default function App() {
-  const [role, setRole] = useState<"Player1" | "Player2" | null>(null);
+  const WS_URL = import.meta.env.VITE_WS_URL || "ws://localhost:8080";
+  const [gameState, setGameState] = useState();
+
+  const wsRef = useRef<WebSocket | null>(null);
 
   useEffect(() => {
-    const saved = localStorage.getItem("role");
-    if (saved === "Player1" || saved === "Player2") setRole(saved);
+    const wsClient = new WebSocket(WS_URL);
+    wsRef.current = wsClient;
+
+    wsClient.onopen = () => {
+      console.log("connected");
+      wsClient.send(JSON.stringify({ id: "join" }));
+    };
+
+    wsClient.onmessage = (event) => {
+      const data = JSON.parse(event.data);
+      setGameState((prevState) => ({ ...prevState, ...data }));
+    };
+
+    wsClient.onerror = (error) => {
+      console.error("WebSocket error:", error);
+    };
+
+    return () => {
+      if (wsClient.readyState === WebSocket.OPEN) {
+        wsClient.close();
+      }
+    };
   }, []);
+  console.log(gameState);
 
-  const choose = (role: "Player1" | "Player2") => {
-    localStorage.setItem("role", role);
-    setRole(role);
+
+  const attackEnemy = (moveUsed) => {
+    wsRef.current?.send(JSON.stringify({ id: "attack", sessionID: gameState.sessionID , moveUsed: moveUsed }));
   };
-
-  if (!role) {
-    return (
-      <div className="maindiv">
-
-        <h2>Join</h2>
-
-        <button onClick={() => choose("Player1")}>Join as Player 1</button>
-        <button onClick={() => choose("Player2")}>Join as Player 2</button>
-        <select>
-          <option>choose a pokemon</option>
-        </select>
-      </div>
-    );
-  }
-
-  return role === "Player1" ? <Player1/> : <Player2 />;
+  return (
+    <div className="maindiv">
+      <BattleScreen gameState={gameState} attackEnemy={attackEnemy} />
+    </div>
+  );
 }

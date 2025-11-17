@@ -1,4 +1,5 @@
 import { WebSocketServer } from "ws";
+import { TYPE_CHART } from "./src/typeChart.js";
 
 const wss = new WebSocketServer({ port: 8080 });
 
@@ -18,12 +19,18 @@ const clients = {
   Player2: null,
 };
 
+
+const RANDOM_VARIANCE = 0.15;
+const RANDOM_MIN = 0.85;
+const DAMAGE_BALANCE = 10;
+const STAB_MULTIPLIER = 1.5;
+
 async function fetchJson(url) {
   const res = await fetch(url);
   return res.json();
 }
 
-async function initGame(player1Name = "charizard", player2Name = "blastoise") {
+async function initGame(player1Name = "rayquaza", player2Name = "charizard") {
   if (game.pokemon1Stats && game.pokemon2Stats) return;
 
   const [p1, p2] = await Promise.all([
@@ -71,7 +78,13 @@ async function initGame(player1Name = "charizard", player2Name = "blastoise") {
     const indices = [...Array(filtered.length).keys()]
       .sort(() => Math.random() - 0.5)
       .slice(0, 4);
-    return indices.map((i) => filtered[i].name);
+    return indices.map((i) => ({
+      name: filtered[i].name,
+      type: filtered[i].type.name,
+      power: filtered[i].power,
+      accuracy: filtered[i].accuracy,
+      damage_class: filtered[i].damage_class.name,
+    }));
   };
 
   game.moves1 = await movesFor(p1);
@@ -124,7 +137,7 @@ wss.on("connection", function connection(ws) {
       if (message.type === "move") {
         if (game.gameOver) return;
         const moveData = await getMoveData(message.movename).catch((e) => {
-          console.warn("failed to fetch move", message.movename, e);
+          console.log("failed to fetch move", message.movename, e);
           return null;
         });
         if (!moveData) return;
@@ -138,166 +151,8 @@ wss.on("connection", function connection(ws) {
             ? game.pokemon2Stats
             : game.pokemon1Stats;
 
-        const typeChart = {
-          normal: {
-            rock: 0.5,
-            ghost: 0,
-            steel: 0.5,
-          },
-          fire: {
-            fire: 0.5,
-            water: 0.5,
-            grass: 2,
-            ice: 2,
-            bug: 2,
-            rock: 0.5,
-            dragon: 0.5,
-            steel: 2,
-          },
-          water: {
-            fire: 2,
-            water: 0.5,
-            grass: 0.5,
-            ground: 2,
-            rock: 2,
-            dragon: 0.5,
-          },
-          electric: {
-            water: 2,
-            electric: 0.5,
-            grass: 0.5,
-            ground: 0,
-            flying: 2,
-            dragon: 0.5,
-          },
-          grass: {
-            fire: 0.5,
-            water: 2,
-            grass: 0.5,
-            poison: 0.5,
-            ground: 2,
-            flying: 0.5,
-            bug: 0.5,
-            rock: 2,
-            dragon: 0.5,
-            steel: 0.5,
-          },
-          ice: {
-            fire: 0.5,
-            water: 0.5,
-            grass: 2,
-            ground: 2,
-            flying: 2,
-            dragon: 2,
-            steel: 0.5,
-          },
-          fighting: {
-            normal: 2,
-            ice: 2,
-            rock: 2,
-            dark: 2,
-            steel: 2,
-            poison: 0.5,
-            flying: 0.5,
-            psychic: 0.5,
-            bug: 0.5,
-            fairy: 0.5,
-            ghost: 0,
-          },
-          poison: {
-            grass: 2,
-            poison: 0.5,
-            ground: 0.5,
-            rock: 0.5,
-            ghost: 0.5,
-            steel: 0,
-            fairy: 2,
-          },
-          ground: {
-            fire: 2,
-            electric: 2,
-            grass: 0.5,
-            poison: 2,
-            flying: 0,
-            bug: 0.5,
-            rock: 2,
-            steel: 2,
-          },
-          flying: {
-            electric: 0.5,
-            grass: 2,
-            fighting: 2,
-            bug: 2,
-            rock: 0.5,
-            steel: 0.5,
-          },
-          psychic: {
-            fighting: 2,
-            poison: 2,
-            psychic: 0.5,
-            dark: 0,
-            steel: 0.5,
-          },
-          bug: {
-            fire: 0.5,
-            grass: 2,
-            fighting: 0.5,
-            poison: 0.5,
-            flying: 0.5,
-            psychic: 2,
-            ghost: 0.5,
-            dark: 2,
-            steel: 0.5,
-            fairy: 0.5,
-          },
-          rock: {
-            fire: 2,
-            ice: 2,
-            fighting: 0.5,
-            ground: 0.5,
-            flying: 2,
-            bug: 2,
-            steel: 0.5,
-          },
-          ghost: {
-            normal: 0,
-            psychic: 2,
-            ghost: 2,
-            dark: 0.5,
-          },
-          dragon: {
-            dragon: 2,
-            steel: 0.5,
-            fairy: 0,
-          },
-          dark: {
-            fighting: 0.5,
-            psychic: 2,
-            ghost: 2,
-            dark: 0.5,
-            fairy: 0.5,
-          },
-          steel: {
-            fire: 0.5,
-            water: 0.5,
-            electric: 0.5,
-            ice: 2,
-            rock: 2,
-            fairy: 2,
-            steel: 0.5,
-          },
-          fairy: {
-            fire: 0.5,
-            fighting: 2,
-            poison: 0.5,
-            dragon: 2,
-            dark: 2,
-            steel: 0.5,
-          },
-        };
-
         const effectiveness =
-          typeChart[moveData.type.name]?.[defenderStats.type] ?? 1;
+          TYPE_CHART[moveData.type.name]?.[defenderStats.type] ?? 1;
         const attackerStat =
           moveData.damage_class.name === "physical"
             ? attackerStats.attack
@@ -306,15 +161,16 @@ wss.on("connection", function connection(ws) {
           moveData.damage_class.name === "physical"
             ? defenderStats.defense
             : defenderStats.special_defense;
-        const STAB = moveData.type.name === attackerStats.type ? 1.5 : 1;
-        const randomFactor = Math.random() * 0.15 + 0.85;
-        const balance = 10;
+
+        const STAB =
+          moveData.type.name === attackerStats.type ? STAB_MULTIPLIER : 1;
+        const randomFactor = Math.random() * RANDOM_VARIANCE + RANDOM_MIN;
         const damage = Math.floor(
           (((moveData.power * attackerStat) / defenderStat) *
             STAB *
             effectiveness *
             randomFactor) /
-            balance,
+            DAMAGE_BALANCE,
         );
 
         if (message.attacker === "pokemon1") {
@@ -334,6 +190,7 @@ wss.on("connection", function connection(ws) {
           msg: `${attackerStats.name.toUpperCase()} used ${moveData.name.toUpperCase()}`,
         });
         broadcast({ id: "defender", defender: defenderStats });
+        broadcast({ id: "movedata", movetype: moveData.type.name });
 
         if (game.pokemon1HP <= 0 || game.pokemon2HP <= 0) {
           game.gameOver = true;

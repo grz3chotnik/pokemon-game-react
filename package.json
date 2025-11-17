@@ -1,5 +1,5 @@
 {
-  "name": "recipe-website",
+  "name": "pokemon-game",
   "private": true,
   "version": "0.0.0",
   "type": "module",
@@ -14,11 +14,13 @@
     "@base-ui-components/react": "^1.0.0-beta.4",
     "axios": "^1.12.2",
     "axios-cache-interceptor": "^1.8.3",
+    "dotenv": "^17.2.3",
     "motion": "^12.23.24",
     "pokenode-ts": "^1.20.0",
     "react": "^19.1.1",
     "react-dom": "^19.1.1",
     "react-router-dom": "^7.9.4",
+    "uuid": "^13.0.0",
     "ws": "^8.18.3"
   },
   "devDependencies": {

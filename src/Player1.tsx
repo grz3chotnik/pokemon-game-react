@@ -5,13 +5,13 @@ import * as motion from "motion/react-client";
 
 const WS_URL = "ws://192.168.1.53:8080";
 
-export default function Player1({chosenPokemon}) {
+export default function Player1( ) {
   const wsRef = useRef<WebSocket>(null);
   const reconnectTimerRef = useRef(null);
   const mountedRef = useRef(true);
 
-  const [pokemon1Stats, setPokemon1Stats] = useState(null);
-  const [pokemon2Stats, setPokemon2Stats] = useState(null);
+  const [pokemon1Stats, setPokemon1Stats] = useState<any | null>(null);
+  const [pokemon2Stats, setPokemon2Stats] = useState<any | null>(null);
   const [pokemon1HP, setPokemon1HP] = useState(null);
   const [pokemon2HP, setPokemon2HP] = useState(null);
   const [pokemon1MaxHp, setPokemon1MaxHp] = useState(null);
@@ -20,7 +20,7 @@ export default function Player1({chosenPokemon}) {
   const [pokemonImg2, setPokemonImg2] = useState(null);
   const [cry1, setCry1] = useState(null);
 
-  const [pokemonMoves, setPokemonMoves] = useState([]);
+  const [pokemonMoves, setPokemonMoves] = useState<any[]>([]);
 
   const [whoseTurn, setWhoseTurn] = useState("Player1");
   const [attackMsg, setAttackMsg] = useState("");
@@ -33,10 +33,20 @@ export default function Player1({chosenPokemon}) {
   const [selectedMove, setSelectedMove] = useState(0);
   const [hoveredMove, setHoveredMove] = useState(null);
   const [isAttacking, setIsAttacking] = useState(false);
+  const [isEnemyAttacking, setIsEnemyAttacking] = useState(false);
+  const [attackAnimation, setAttackAnimation] = useState();
+  const [menuState, setMenuState] = useState("main");
+
+  const [flash, setFlash] = useState(false);
 
   const triggerAttackAnimation = () => {
     setIsAttacking(true);
     setTimeout(() => setIsAttacking(false), 500);
+  };
+
+  const triggerEnemyAttackAnimation = () => {
+    setIsEnemyAttacking(true);
+    setTimeout(() => setIsEnemyAttacking(false), 500);
   };
 
   useEffect(() => {
@@ -92,8 +102,16 @@ export default function Player1({chosenPokemon}) {
 
           if (msg.id === "hp1") setPokemon1HP(msg.data);
           else if (msg.id === "hp2") setPokemon2HP(msg.data);
-          else if (msg.id === "turn") setWhoseTurn(msg.turn);
-          else if (msg.id === "attackMsg") {
+          else if (msg.id === "turn") {
+            setWhoseTurn(msg.turn);
+            setMenuState("main");
+            console.log(msg.turn);
+            if (msg.turn === "Player2") {
+              triggerEnemyAttackAnimation();
+            } else {
+              triggerAttackAnimation();
+            }
+          } else if (msg.id === "attackMsg") {
             setEffectivenessMsg("");
             setAttackMsg(msg.msg);
           } else if (msg.id === "effectiveness") {
@@ -108,13 +126,18 @@ export default function Player1({chosenPokemon}) {
               setButtonsDisabled(false);
             }, 900);
           } else if (msg.id === "defender") {
-            console.log(msg.defender);
+            // console.log(msg.defender);
           } else if (msg.id === "gameOver") {
             setGameOver(true);
             setWinner(msg.winner);
             setButtonsDisabled(true);
           } else if (msg.id === "error") {
             console.warn("server error:", msg);
+          } else if (msg.id === "movedata") {
+            setAttackAnimation(msg.movetype);
+            setTimeout(() => {
+              setAttackAnimation("");
+            }, 600);
           }
         } catch (error) {
           console.error(" error", error);
@@ -182,6 +205,19 @@ export default function Player1({chosenPokemon}) {
     return () => window.removeEventListener("keydown", handler);
   }, [pokemonMoves, selectedMove, buttonsDisabled, gameOver, whoseTurn]);
 
+  useEffect(() => {
+    if (attackAnimation === "dark") {
+      const interval = setInterval(() => {
+        setFlash((currentFlash) => !currentFlash);
+      }, 100);
+
+      setTimeout(() => {
+        clearInterval(interval);
+        setFlash(false);
+      }, 1000);
+    }
+  }, [attackAnimation]);
+
   const attackEnemy = (move: string) => {
     const ws = wsRef.current;
     if (!ws || ws.readyState !== WebSocket.OPEN) return;
@@ -193,11 +229,14 @@ export default function Player1({chosenPokemon}) {
         audio.play().catch(() => {});
       } catch {}
     }
-    triggerAttackAnimation();
     setButtonsDisabled(true);
 
     ws.send(
-      JSON.stringify({ type: "move", attacker: "pokemon1", movename: move }),
+      JSON.stringify({
+        type: "move",
+        attacker: "pokemon1",
+        movename: move.name,
+      }),
     );
   };
 
@@ -209,10 +248,48 @@ export default function Player1({chosenPokemon}) {
     );
   }
 
+  const moveAnimationMap = {
+    normal: "src/assets/Sprite-0001.gif",
+    fire: "src/assets/Sprite-0002.gif",
+    electric: "src/assets/Sprite-0003.gif",
+    water: "src/assets/Sprite-0004.gif",
+    ice: "src/assets/Sprite-0006.gif",
+    ground: "src/assets/Sprite-0013.gif",
+    fighting: "",
+    flying: "src/assets/Sprite-0007.gif",
+    ghost: "",
+    dark: "src/assets/Sprite-0009.gif",
+    rock: "src/assets/Sprite-0011.gif",
+    steel: "src/assets/Sprite-0008.gif",
+    grass: "src/assets/Sprite-0010.gif",
+  };
+
+  const filterEffect = {
+    dark: "invert(100%)",
+    fire: "brightness(70%) saturate(000%) sepia(100%) hue-rotate(309deg) contrast(270%)",
+    water:
+      "brightness(80%) saturate(100%) sepia(100%) hue-rotate(176deg) contrast(150%)",
+    electric: " saturate(120%) ",
+    ice: "brightness(100%) saturate(100%) sepia(100%) hue-rotate(150deg) contrast(150%)",
+    normal: "brightness(90%)",
+  };
+
   return (
     <div className="maindiv">
       {gameOver && <h2>winner: {winner}</h2>}
-      <div className="gamediv">
+      <div
+        className="gamediv"
+        style={{
+          filter:
+            attackAnimation === "dark"
+              ? flash
+                ? filterEffect["dark"]
+                : ""
+              : attackAnimation === "electric"
+                ? filterEffect[attackAnimation]
+                : "",
+        }}
+      >
         <div className="player1">
           <PokemonInfo
             pokemon={pokemon2Stats?.name}
@@ -225,11 +302,13 @@ export default function Player1({chosenPokemon}) {
                 ? { y: [0, 100], opacity: [1, 0.5, 0] }
                 : winner === "Player 1"
                   ? { x: 0, y: 0, rotate: 0, opacity: 1 }
-                  : isAttacking
+                  : isEnemyAttacking
                     ? { y: [0, -50, 0], rotate: [0, 10, -10, 0] }
-                    : { x: 0, y: 0, rotate: 0, opacity: 1 }
+                    : isAttacking
+                      ? { x: [0, 25, 0, 25, 0] }
+                      : { x: 0, y: 0, rotate: 0, opacity: 1 }
             }
-            transition={{ duration: 0.3, ease: "easeInOut" }}
+            transition={{ duration: 0.3, delay: 0, ease: "easeInOut" }}
           >
             <div className="pokemon1img">
               {pokemonImg ? (
@@ -238,9 +317,22 @@ export default function Player1({chosenPokemon}) {
                   height="350px"
                   width="350px"
                   alt="pokemon1"
+                  style={
+                    attackAnimation && whoseTurn === "Player1"
+                      ? { filter: filterEffect[attackAnimation] }
+                      : null
+                    // { filter: filterEffect["normal"] }
+                  }
                 />
               ) : (
                 <div>no img</div>
+              )}
+              {whoseTurn === "Player1" && (
+                <img
+                  src={attackAnimation ? moveAnimationMap[attackAnimation] : ""}
+                  height="200px"
+                  className="attackimg2"
+                />
               )}
             </div>
           </motion.div>
@@ -253,11 +345,13 @@ export default function Player1({chosenPokemon}) {
                 ? { y: [0, 100], opacity: [1, 0.5, 0] }
                 : winner === "Player 2"
                   ? { x: 0, y: 0, rotate: 0, opacity: 1 }
-                  : isAttacking
+                  : isEnemyAttacking
                     ? { x: [0, 25, 0, 25, 0] }
-                    : null
+                    : isAttacking
+                      ? { y: [0, -50, 0], rotate: [0, 10, -10, 0] }
+                      : { x: 0, y: 0, rotate: 0, opacity: 1 }
             }
-            transition={{ duration: 0.3, delay: 0.1, ease: "easeInOut" }}
+            transition={{ duration: 0.3, delay: 0, ease: "easeInOut" }}
           >
             <div className="pokemon2img">
               {pokemonImg2 ? (
@@ -266,9 +360,21 @@ export default function Player1({chosenPokemon}) {
                   height="350px"
                   width="350px"
                   alt="pokemon2"
+                  style={
+                    attackAnimation && whoseTurn === "Player2"
+                      ? { filter: filterEffect[attackAnimation] }
+                      : null
+                  }
                 />
               ) : (
                 <div>no img</div>
+              )}
+              {whoseTurn === "Player2" && (
+                <img
+                  src={attackAnimation ? moveAnimationMap[attackAnimation] : ""}
+                  height="200px"
+                  className="attackimg2"
+                />
               )}
             </div>
           </motion.div>
@@ -282,38 +388,77 @@ export default function Player1({chosenPokemon}) {
       </div>
 
       <div className="infodiv">
-        <div className="text">
-          {gameOver ? (
-            <p>{(pokemon1Stats?.name ?? "Pokemon").toUpperCase()} fainted...</p>
-          ) : attackMsg && !effectivenessMsg ? (
-            <p>{attackMsg}</p>
-          ) : effectivenessMsg ? (
-            <p>{effectivenessMsg}</p>
-          ) : (
-            <p>what will {whoseTurn.toUpperCase()} do?</p>
-          )}
-        </div>
+        {menuState === "main" && (
+          <div className="text">
+            {gameOver ? (
+              <p>{whoseTurn.toUpperCase()} fainted...</p>
+            ) : attackMsg && !effectivenessMsg ? (
+              <p>{attackMsg}</p>
+            ) : effectivenessMsg ? (
+              <p>{effectivenessMsg}</p>
+            ) : (
+              <p>what will {whoseTurn.toUpperCase()} do?</p>
+            )}
+          </div>
+        )}
 
-        <div className="moves">
-          {pokemonMoves.map((move, index) => (
-            <button
-              className="attackbutton"
-              key={`${move}-${index}`}
-              onClick={() => attackEnemy(move)}
-              disabled={whoseTurn === "Player2" || gameOver || buttonsDisabled}
-              onMouseEnter={() => setHoveredMove(index)}
-              onMouseLeave={() => setHoveredMove(null)}
-            >
-              {hoveredMove === null && index === selectedMove && (
-                <img src="./select.svg" height="20px" alt="select" />
-              )}
-              {hoveredMove === index && (
-                <img src="./select.svg" height="20px" alt="select" />
-              )}
-              {move.toUpperCase()}
-            </button>
-          ))}
-        </div>
+        {menuState === "main" ? (
+            whoseTurn === "Player1" && <div className="menu">
+              <button
+                onClick={() => setMenuState("moves")}
+                className="attackbutton"
+                disabled={whoseTurn === "Player2" || gameOver || buttonsDisabled}
+              >
+                FIGHT
+              </button>
+              <button disabled className="attackbutton">
+                BAG
+              </button>
+              <button disabled className="attackbutton">
+                POKEMON
+              </button>
+              <button disabled className="attackbutton">
+                RUN
+              </button>
+            </div>
+
+
+        ) : (
+          <>
+            <div className="moves">
+              {pokemonMoves.map((move, index) => (
+                <button
+                  className="attackbutton"
+                  key={`${move}-${index}`}
+                  onClick={() => {
+                    attackEnemy(move);
+                    setMenuState("menu");
+                  }}
+                  disabled={
+                    whoseTurn === "Player2" || gameOver || buttonsDisabled
+                  }
+                  onMouseEnter={() => setHoveredMove(index)}
+                  onMouseLeave={() => setHoveredMove(null)}
+                >
+                  {hoveredMove === null && index === selectedMove && (
+                    <img src="./select.svg" height="20px" alt="select" />
+                  )}
+                  {hoveredMove === index && (
+                    <img src="./select.svg" height="20px" alt="select" />
+                  )}
+                  {move.name.toUpperCase()}
+                </button>
+              ))}
+            </div>
+            <div className="movesstats">
+              <p>PP:{pokemonMoves[hoveredMove || selectedMove]?.power}</p>
+              <p>
+                TYPE/
+                {pokemonMoves[hoveredMove || selectedMove]?.type.toUpperCase()}
+              </p>
+            </div>
+          </>
+        )}
       </div>
     </div>
   );

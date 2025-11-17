@@ -12,7 +12,7 @@ export default function PokemonInfo({
   return (
     <div className="playerinfo">
       <div className="pokemonname">
-        <p>{pokemon?.toUpperCase()}</p>
+        <p>{pokemon}</p>
       </div>
 
       <div className="healthbardiv">
