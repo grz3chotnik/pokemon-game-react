@@ -34,9 +34,14 @@ export default function App() {
   }, []);
   console.log(gameState);
 
-
-  const attackEnemy = (moveUsed) => {
-    wsRef.current?.send(JSON.stringify({ id: "attack", sessionID: gameState.sessionID , moveUsed: moveUsed }));
+  const attackEnemy = (moveName) => {
+    wsRef.current?.send(
+      JSON.stringify({
+        id: "attack",
+        sessionID: gameState.sessionID,
+        moveName,
+      }),
+    );
   };
   return (
     <div className="maindiv">

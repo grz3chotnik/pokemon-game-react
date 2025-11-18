@@ -94,7 +94,7 @@ const BattleScreen = ({ gameState, attackEnemy }: BattleScreenProps) => {
                   className="attackbutton"
                   onClick={() => {
                     setMenuState("main");
-                    attackEnemy(move);
+                    attackEnemy(move.name);
                   }}
                   onMouseEnter={() => {
                     setHoveredMove(index);
