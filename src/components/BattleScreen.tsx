@@ -2,14 +2,41 @@ import "../App.css";
 import PokemonInfo from "./PokemonInfo.tsx";
 import { useState } from "react";
 
+interface Move {
+  name: string;
+  power: number;
+  type: string;
+}
+
 interface BattleScreenProps {
-  gameState: any; // TODO: TYPE THIS!!!
-  attackEnemy: any;
+  gameState: {
+    gameOver: boolean;
+    winner: boolean;
+    opponent: {
+      name: string;
+      pokemonHp: number;
+      pokemonMaxHp: number;
+      pokemonBackImageURL: string;
+      pokemonImageURL: string;
+      gameOver: boolean;
+      winner: boolean;
+    };
+    player: {
+      name: string;
+      pokemonHp: number;
+      pokemonMaxHp: number;
+      pokemonBackImageURL: string;
+      pokemonImageURL: string;
+      pokemonMoves: Move[];
+      isPlayerTurn: boolean;
+    };
+  };
+  attackEnemy: (move: string) => void;
 }
 
 const BattleScreen = ({ gameState, attackEnemy }: BattleScreenProps) => {
   const [menuState, setMenuState] = useState<string>("main");
-  const [hoveredMove, setHoveredMove] = useState<number>("");
+  const [hoveredMove, setHoveredMove] = useState<number>(0);
 
   if (!gameState) {
     return <p>loading...</p>;
@@ -107,7 +134,10 @@ const BattleScreen = ({ gameState, attackEnemy }: BattleScreenProps) => {
             </div>
             <div className="movesstats">
               <p>PP: {gameState.player.pokemonMoves[hoveredMove]?.power}</p>
-              <p>TYPE/{gameState.player.pokemonMoves[hoveredMove]?.type.toUpperCase()}</p>
+              <p>
+                TYPE/
+                {gameState.player.pokemonMoves[hoveredMove]?.type.toUpperCase()}
+              </p>
             </div>
           </>
         )}

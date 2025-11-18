@@ -33,7 +33,6 @@ export default function App() {
     };
   }, []);
   console.log(gameState);
-
   const attackEnemy = (moveName) => {
     wsRef.current?.send(
       JSON.stringify({

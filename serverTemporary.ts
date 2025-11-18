@@ -5,7 +5,6 @@ const wss = new WebSocketServer({ port: 8080 });
 const BALANCE = 10;
 const RANDOM_FACTOR = Math.random() * (1 - 0.85) + 0.85;
 let whoseTurn;
-let isPlayerTurn;
 
 const enum WSMessage {
   Join = "join",
@@ -41,7 +40,7 @@ const getFilteredMoves = (moves) => {
   }));
 };
 
-const gameState = {};
+let gameState = {};
 const clients = new Map();
 
 wss.on("connection", (ws) => {
@@ -91,9 +90,10 @@ wss.on("connection", (ws) => {
             pokemonHp: gameState[sessionID].pokemonHp,
             pokemonMaxHp: gameState[sessionID].pokemonMaxHp,
             pokemonMoves: gameState[sessionID].pokemonMoves.map(
-              ({ name, type }) => ({
+              ({ name, type, power }) => ({
                 name,
                 type,
+                power,
               }),
             ),
             pokemonType: gameState[sessionID].pokemonType,
@@ -120,9 +120,10 @@ wss.on("connection", (ws) => {
             pokemonHp: gameState[sessionID].pokemonHp,
             pokemonMaxHp: gameState[sessionID].pokemonMaxHp,
             pokemonMoves: gameState[sessionID].pokemonMoves.map(
-              ({ name, type }) => ({
+              ({ name, type, power }) => ({
                 name,
                 type,
+                power,
               }),
             ),
             pokemonType: gameState[sessionID].pokemonType,
@@ -182,16 +183,15 @@ wss.on("connection", (ws) => {
 
     if (whoseTurn === sessionID) {
       whoseTurn = opponentID;
-      isPlayerTurn = true;
-    } else {
-      isPlayerTurn = false;
     }
-
+    console.log(gameState);
     console.log(whoseTurn);
-    console.log(isPlayerTurn);
 
     //applying the dmg
-    gameState[opponentID].pokemonHp = gameState[opponentID].pokemonHp - damage;
+    gameState[opponentID].pokemonHp = Math.max(
+      0,
+      gameState[opponentID].pokemonHp - damage,
+    );
     //sending the update
     ws.send(
       JSON.stringify({
@@ -202,9 +202,10 @@ wss.on("connection", (ws) => {
           pokemonHp: gameState[sessionID].pokemonHp,
           pokemonMaxHp: gameState[sessionID].pokemonMaxHp,
           pokemonMoves: gameState[sessionID].pokemonMoves.map(
-            ({ name, type }) => ({
+            ({ name, type, power }) => ({
               name,
               type,
+              power,
             }),
           ),
           pokemonType: gameState[sessionID].pokemonType,
@@ -232,9 +233,10 @@ wss.on("connection", (ws) => {
           pokemonMaxHp: gameState[opponentID].pokemonMaxHp,
           pokemonType: gameState[opponentID].pokemonType,
           pokemonMoves: gameState[opponentID].pokemonMoves.map(
-            ({ name, type }) => ({
+            ({ name, type, power }) => ({
               name,
               type,
+              power,
             }),
           ),
           isPlayerTurn: whoseTurn === opponentID ? true : false,
@@ -261,6 +263,12 @@ wss.on("connection", (ws) => {
       handleAttack(msg.moveName, msg.sessionID);
     }
   });
+  ws.onclose = () => {
+    console.log("client disconnected");
+    if (clients.size === 2) {
+      gameState = {};
+    }
+  };
 });
 
 console.log("WebSocket server is running on port 8080");
