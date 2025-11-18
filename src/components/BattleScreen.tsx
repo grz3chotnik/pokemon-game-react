@@ -91,6 +91,7 @@ const BattleScreen = ({ gameState, attackEnemy }: BattleScreenProps) => {
             <div className="moves">
               {gameState.player.pokemonMoves.map((move, index) => (
                 <button
+                  disabled={gameState.player.isPlayerTurn === false}
                   className="attackbutton"
                   onClick={() => {
                     setMenuState("main");

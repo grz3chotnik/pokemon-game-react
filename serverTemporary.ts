@@ -4,6 +4,8 @@ import { ATTACK_TO_OPPONENT } from "./config/attackToOpponentMap";
 const wss = new WebSocketServer({ port: 8080 });
 const BALANCE = 10;
 const RANDOM_FACTOR = Math.random() * (1 - 0.85) + 0.85;
+let whoseTurn;
+let isPlayerTurn;
 
 const enum WSMessage {
   Join = "join",
@@ -40,7 +42,6 @@ const getFilteredMoves = (moves) => {
 };
 
 const gameState = {};
-
 const clients = new Map();
 
 wss.on("connection", (ws) => {
@@ -49,16 +50,17 @@ wss.on("connection", (ws) => {
       console.log("error, 2 players already here");
       return;
     }
-
     const pokemon = await fetchPokemon();
     const pokemonMoves = await fetchPokemonMoves(pokemon.moves);
 
     const sessionID = uuidv4();
     const filteredPokemonMoves = getFilteredMoves(pokemonMoves);
+    if (!whoseTurn) {
+      whoseTurn = sessionID;
+    }
 
     clients.set(sessionID, ws);
     // ws._sessionID = sessionID;
-
     gameState[sessionID] = {
       name: pokemon.name,
       pokemonHp: pokemon.stats[0].base_stat, // 0 is pokemon's HP
@@ -70,11 +72,9 @@ wss.on("connection", (ws) => {
       pokemonAttack: pokemon.stats[1].base_stat, // 1 is the pokemons attack power
       pokemonDefense: pokemon.stats[2].base_stat, // 2 is the pokemons attack power
 
-      whoseTurn: [sessionID],
       gameOver: false,
       winner: null,
     };
-
 
     const opponentID = Object.keys(gameState).filter(
       (element) => element !== sessionID,
@@ -97,6 +97,7 @@ wss.on("connection", (ws) => {
               }),
             ),
             pokemonType: gameState[sessionID].pokemonType,
+            isPlayerTurn: whoseTurn === sessionID ? true : false,
           },
           opponent: {
             name: gameState[opponentID].name,
@@ -154,7 +155,6 @@ wss.on("connection", (ws) => {
   const handleAttack = (attackName, sessionID) => {
     const opponentID = Object.keys(gameState).find((id) => id !== sessionID);
     const opponentType = gameState[opponentID]?.pokemonType;
-
     const { power: movePower, type: attackType } = gameState[
       sessionID
     ].pokemonMoves.find((move) => move.name === attackName);
@@ -162,19 +162,16 @@ wss.on("connection", (ws) => {
     const opponentDefense = gameState[opponentID].pokemonDefense;
     const stab = attackType === gameState[sessionID].pokemonType ? 1.5 : 1;
     const effectiveness = ATTACK_TO_OPPONENT[attackType][opponentType];
-
     const effectivenessToMultiplier = {
       noEffect: 0,
       effective: 2,
       notEffective: 0.5,
       default: 1,
     };
-
     const multiplier =
       effectiveness === undefined
         ? effectivenessToMultiplier["default"]
         : effectivenessToMultiplier[effectiveness];
-
     const damage = Math.floor(
       (((movePower * playerAttack) / opponentDefense) *
         stab *
@@ -182,11 +179,20 @@ wss.on("connection", (ws) => {
         RANDOM_FACTOR) /
         BALANCE,
     );
+
+    if (whoseTurn === sessionID) {
+      whoseTurn = opponentID;
+      isPlayerTurn = true;
+    } else {
+      isPlayerTurn = false;
+    }
+
+    console.log(whoseTurn);
+    console.log(isPlayerTurn);
+
     //applying the dmg
     gameState[opponentID].pokemonHp = gameState[opponentID].pokemonHp - damage;
-
     //sending the update
-
     ws.send(
       JSON.stringify({
         player: {
@@ -202,6 +208,7 @@ wss.on("connection", (ws) => {
             }),
           ),
           pokemonType: gameState[sessionID].pokemonType,
+          isPlayerTurn: whoseTurn === sessionID ? true : false,
         },
         opponent: {
           name: gameState[opponentID].name,
@@ -230,6 +237,7 @@ wss.on("connection", (ws) => {
               type,
             }),
           ),
+          isPlayerTurn: whoseTurn === opponentID ? true : false,
         },
         opponent: {
           name: gameState[sessionID].name,
