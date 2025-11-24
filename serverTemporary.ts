@@ -9,6 +9,7 @@ let whoseTurn;
 const enum WSMessage {
   Join = "join",
   Attack = "attack",
+  Exit = "exit",
 }
 
 const getRandomPokemonId = () => Math.floor(Math.random() * (1000 - 1 + 1) + 1);
@@ -28,6 +29,7 @@ const getFilteredMoves = (moves) => {
     (move) =>
       move && move.power !== null && move.damage_class.name !== "status",
   );
+
   const indices = [...Array(filtered.length).keys()]
     .sort(() => Math.random() - 0.5)
     .slice(0, 4);
@@ -42,62 +44,59 @@ const getFilteredMoves = (moves) => {
 
 let gameState = {};
 const clients = new Map();
+let inactivityTimer = null;
+
+const resetInactivityTimer = () => {
+  console.log("inactivity timer reset");
+  clearTimeout(inactivityTimer);
+  inactivityTimer = setTimeout(() => {
+    console.log("game closed because no activity");
+    gameState = {};
+  }, 60000);
+};
 
 wss.on("connection", (ws) => {
-  const handleJoin = async () => {
-    if (Object.keys(gameState).length > 1) {
+  const handleJoin = async (clientSessionID: string) => {
+    if (Object.keys(gameState).length > 1 && !gameState[clientSessionID]) {
       console.log("error, 2 players already here");
       return;
     }
+    resetInactivityTimer();
+
     const pokemon = await fetchPokemon();
     const pokemonMoves = await fetchPokemonMoves(pokemon.moves);
-
     const sessionID = uuidv4();
     const filteredPokemonMoves = getFilteredMoves(pokemonMoves);
     if (!whoseTurn) {
       whoseTurn = sessionID;
     }
-
-    clients.set(sessionID, ws);
-    // ws._sessionID = sessionID;
-    gameState[sessionID] = {
-      name: pokemon.name,
-      pokemonHp: pokemon.stats[0].base_stat, // 0 is pokemon's HP
-      pokemonMaxHp: pokemon.stats[0].base_stat,
-      pokemonImageURL: pokemon.sprites.front_default,
-      pokemonBackImageURL: pokemon.sprites.back_default,
-      pokemonMoves: filteredPokemonMoves,
-      pokemonType: pokemon.types[0].type.name,
-      pokemonAttack: pokemon.stats[1].base_stat, // 1 is the pokemons attack power
-      pokemonDefense: pokemon.stats[2].base_stat, // 2 is the pokemons attack power
-
-      gameOver: false,
-      winner: null,
-    };
-
     const opponentID = Object.keys(gameState).filter(
-      (element) => element !== sessionID,
+      (element) => element !== clientSessionID,
     )[0];
-
-    if (opponentID) {
-      ws.send(
+    if (clientSessionID) {
+      // clientSessionID = JSON.parse(clientSessionID);
+      console.log(clientSessionID);
+      console.log(gameState);
+      clients.set(clientSessionID, ws);
+      clients.get(clientSessionID).send(
         JSON.stringify({
-          sessionID,
+          id: "gameupdate",
+          clientSessionID,
           player: {
-            name: gameState[sessionID].name,
-            pokemonImageURL: gameState[sessionID].pokemonImageURL,
-            pokemonBackImageURL: gameState[sessionID].pokemonBackImageURL,
-            pokemonHp: gameState[sessionID].pokemonHp,
-            pokemonMaxHp: gameState[sessionID].pokemonMaxHp,
-            pokemonMoves: gameState[sessionID].pokemonMoves.map(
+            name: gameState[clientSessionID].name,
+            pokemonImageURL: gameState[clientSessionID].pokemonImageURL,
+            pokemonBackImageURL: gameState[clientSessionID].pokemonBackImageURL,
+            pokemonHp: gameState[clientSessionID].pokemonHp,
+            pokemonMaxHp: gameState[clientSessionID].pokemonMaxHp,
+            pokemonMoves: gameState[clientSessionID].pokemonMoves.map(
               ({ name, type, power }) => ({
                 name,
                 type,
                 power,
               }),
             ),
-            pokemonType: gameState[sessionID].pokemonType,
-            isPlayerTurn: whoseTurn === sessionID ? true : false,
+            pokemonType: gameState[clientSessionID].pokemonType,
+            isPlayerTurn: whoseTurn === clientSessionID ? true : false,
           },
           opponent: {
             name: gameState[opponentID].name,
@@ -109,27 +108,83 @@ wss.on("connection", (ws) => {
           },
         }),
       );
-    } else {
-      ws.send(
-        JSON.stringify({
-          sessionID,
-          player: {
-            name: gameState[sessionID].name,
-            pokemonImageURL: gameState[sessionID].pokemonImageURL,
-            pokemonBackImageURL: gameState[sessionID].pokemonBackImageURL,
-            pokemonHp: gameState[sessionID].pokemonHp,
-            pokemonMaxHp: gameState[sessionID].pokemonMaxHp,
-            pokemonMoves: gameState[sessionID].pokemonMoves.map(
-              ({ name, type, power }) => ({
-                name,
-                type,
-                power,
-              }),
-            ),
-            pokemonType: gameState[sessionID].pokemonType,
-          },
-          opponent: null,
-        }),
+      return;
+    }
+    if (!clientSessionID) {
+      clients.set(sessionID, ws);
+
+      gameState[sessionID] = {
+        name: pokemon.name,
+        pokemonHp: pokemon.stats[0].base_stat, // 0 is pokemon's HP
+        pokemonMaxHp: pokemon.stats[0].base_stat,
+        pokemonImageURL: pokemon.sprites.front_default,
+        pokemonBackImageURL: pokemon.sprites.back_default,
+        pokemonMoves: filteredPokemonMoves,
+        pokemonType: pokemon.types[0].type.name,
+        pokemonAttack: pokemon.stats[1].base_stat, // 1 is the pokemons attack power
+        pokemonDefense: pokemon.stats[2].base_stat, // 2 is the pokemons attack power
+
+        gameOver: false,
+        winner: null,
+      };
+
+      clients
+        .get(sessionID)
+        .send(JSON.stringify({ id: "sessionID", sessionID: sessionID }));
+      clients.get(sessionID).send(
+        JSON.stringify(
+          !opponentID
+            ? {
+                id: "gameupdate",
+                sessionID,
+                player: {
+                  name: gameState[sessionID].name,
+                  pokemonImageURL: gameState[sessionID].pokemonImageURL,
+                  pokemonBackImageURL: gameState[sessionID].pokemonBackImageURL,
+                  pokemonHp: gameState[sessionID].pokemonHp,
+                  pokemonMaxHp: gameState[sessionID].pokemonMaxHp,
+                  pokemonMoves: gameState[sessionID].pokemonMoves.map(
+                    ({ name, type, power }) => ({
+                      name,
+                      type,
+                      power,
+                    }),
+                  ),
+                  pokemonType: gameState[sessionID].pokemonType,
+                  isPlayerTurn: whoseTurn === sessionID ? true : false,
+                },
+                opponent: null,
+              }
+            : {
+                id: "gameupdate",
+                sessionID,
+                player: {
+                  name: gameState[sessionID].name,
+                  pokemonImageURL: gameState[sessionID].pokemonImageURL,
+                  pokemonBackImageURL: gameState[sessionID].pokemonBackImageURL,
+                  pokemonHp: gameState[sessionID].pokemonHp,
+                  pokemonMaxHp: gameState[sessionID].pokemonMaxHp,
+                  pokemonMoves: gameState[sessionID].pokemonMoves.map(
+                    ({ name, type, power }) => ({
+                      name,
+                      type,
+                      power,
+                    }),
+                  ),
+                  pokemonType: gameState[sessionID].pokemonType,
+                  isPlayerTurn: whoseTurn === sessionID ? true : false,
+                },
+                opponent: {
+                  name: gameState[opponentID].name,
+                  pokemonImageURL: gameState[opponentID]?.pokemonImageURL,
+                  pokemonBackImageURL:
+                    gameState[opponentID].pokemonBackImageURL,
+                  pokemonHp: gameState[opponentID]?.pokemonHp,
+                  pokemonMaxHp: gameState[opponentID].pokemonMaxHp,
+                  pokemonType: gameState[opponentID].pokemonType,
+                },
+              },
+        ),
       );
     }
 
@@ -141,6 +196,8 @@ wss.on("connection", (ws) => {
 
     opponentWs.send(
       JSON.stringify({
+        id: "gameupdate",
+
         opponent: {
           name: gameState[sessionID].name,
           pokemonImageURL: gameState[sessionID].pokemonImageURL,
@@ -154,6 +211,8 @@ wss.on("connection", (ws) => {
   };
 
   const handleAttack = (attackName, sessionID) => {
+    console.log("attack used");
+    resetInactivityTimer();
     const opponentID = Object.keys(gameState).find((id) => id !== sessionID);
     const opponentType = gameState[opponentID]?.pokemonType;
     const { power: movePower, type: attackType } = gameState[
@@ -184,17 +243,24 @@ wss.on("connection", (ws) => {
     if (whoseTurn === sessionID) {
       whoseTurn = opponentID;
     }
-    console.log(gameState);
-    console.log(whoseTurn);
 
     //applying the dmg
     gameState[opponentID].pokemonHp = Math.max(
       0,
       gameState[opponentID].pokemonHp - damage,
     );
+
+    // when someone loses, game ends, gamestate is reset
+    if (gameState[sessionID].pokemonHp === 0 || gameState[opponentID] === 0) {
+      console.log("game over");
+      gameState = {};
+      ws.send(JSON.stringify({ id: "gameOver", gameOver: true }));
+      return;
+    }
     //sending the update
-    ws.send(
+    clients.get(sessionID).send(
       JSON.stringify({
+        id: "attackupdate",
         player: {
           name: gameState[sessionID].name,
           pokemonImageURL: gameState[sessionID].pokemonImageURL,
@@ -218,6 +284,36 @@ wss.on("connection", (ws) => {
           pokemonHp: gameState[opponentID].pokemonHp,
           pokemonMaxHp: gameState[opponentID].pokemonMaxHp,
           pokemonType: gameState[opponentID].pokemonType,
+        },
+      }),
+    );
+
+    clients.get(opponentID).send(
+      JSON.stringify({
+        id: "attackupdate",
+        player: {
+          name: gameState[opponentID].name,
+          pokemonImageURL: gameState[opponentID].pokemonImageURL,
+          pokemonBackImageURL: gameState[opponentID].pokemonBackImageURL,
+          pokemonHp: gameState[opponentID].pokemonHp,
+          pokemonMaxHp: gameState[opponentID].pokemonMaxHp,
+          pokemonMoves: gameState[opponentID].pokemonMoves.map(
+            ({ name, type, power }) => ({
+              name,
+              type,
+              power,
+            }),
+          ),
+          pokemonType: gameState[opponentID].pokemonType,
+          isPlayerTurn: whoseTurn === opponentID ? true : false,
+        },
+        opponent: {
+          name: gameState[sessionID].name,
+          pokemonImageURL: gameState[sessionID].pokemonImageURL,
+          pokemonBackImageURL: gameState[sessionID].pokemonBackImageURL,
+          pokemonHp: gameState[sessionID].pokemonHp,
+          pokemonMaxHp: gameState[sessionID].pokemonMaxHp,
+          pokemonType: gameState[sessionID].pokemonType,
         },
       }),
     );
@@ -253,22 +349,34 @@ wss.on("connection", (ws) => {
     );
   };
 
+  const handleExit = () => {
+    //resetting the gamestate, clearing clients map
+    gameState = {};
+    clients.clear();
+
+    wss.clients.forEach((client) => {
+      client.send(
+        JSON.stringify({
+          id: "exit",
+        }),
+      );
+    });
+  };
+
   ws.on("message", async (message) => {
     const msg = JSON.parse(message.toString());
 
     if (msg.id === WSMessage.Join) {
-      await handleJoin();
+      await handleJoin(msg.clientSessionID);
     }
     if (msg.id === WSMessage.Attack) {
       handleAttack(msg.moveName, msg.sessionID);
     }
-  });
-  ws.onclose = () => {
-    console.log("client disconnected");
-    if (clients.size === 2) {
-      gameState = {};
+
+    if (msg.id === WSMessage.Exit) {
+      handleExit();
     }
-  };
+  });
 });
 
 console.log("WebSocket server is running on port 8080");

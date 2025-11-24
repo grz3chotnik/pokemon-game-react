@@ -32,9 +32,10 @@ interface BattleScreenProps {
     };
   };
   attackEnemy: (move: string) => void;
+  handleExit: () => void
 }
 
-const BattleScreen = ({ gameState, attackEnemy }: BattleScreenProps) => {
+const BattleScreen = ({ gameState, attackEnemy, handleExit}: BattleScreenProps) => {
   const [menuState, setMenuState] = useState<string>("main");
   const [hoveredMove, setHoveredMove] = useState<number>(0);
 
@@ -44,6 +45,13 @@ const BattleScreen = ({ gameState, attackEnemy }: BattleScreenProps) => {
 
   return (
     <div className="maindiv">
+      <button className="endgamebutton"
+              onClick={() => {
+                handleExit()
+              }}
+      >
+        end game
+      </button>
       {gameState.gameOver && <h2>winner: {gameState.winner}</h2>}
       <div className="gamediv">
         <div className="player1">
@@ -87,7 +95,6 @@ const BattleScreen = ({ gameState, attackEnemy }: BattleScreenProps) => {
           />
         </div>
       </div>
-      <p>{menuState}</p>
 
       <div className="infodiv">
         {menuState === "main" && (

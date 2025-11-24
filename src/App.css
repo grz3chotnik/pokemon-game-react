@@ -315,6 +315,13 @@ p {
 
 }
 
+.endgamebutton {
+    background-color: red;
+    color: white;
+    border-radius: 0;
+    padding: 5px;
+}
+
 @keyframes myAnim {
     0%,
     100% {
