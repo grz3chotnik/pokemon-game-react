@@ -8,7 +8,7 @@
     "build": "tsc -b && vite build",
     "lint": "eslint .",
     "preview": "vite preview",
-    "server": "node server.js"
+    "server": "node server.ts"
   },
   "dependencies": {
     "@base-ui-components/react": "^1.0.0-beta.4",

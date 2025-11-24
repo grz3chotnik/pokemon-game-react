@@ -5,7 +5,6 @@ const wss = new WebSocketServer({ port: 8080 });
 const BALANCE = 10;
 const RANDOM_FACTOR = Math.random() * (1 - 0.85) + 0.85;
 let whoseTurn;
-
 const enum WSMessage {
   Join = "join",
   Attack = "attack",
@@ -52,7 +51,7 @@ const resetInactivityTimer = () => {
   inactivityTimer = setTimeout(() => {
     console.log("game closed because no activity");
     gameState = {};
-  }, 60000);
+  }, 1500000);
 };
 
 wss.on("connection", (ws) => {
@@ -96,6 +95,7 @@ wss.on("connection", (ws) => {
               }),
             ),
             pokemonType: gameState[clientSessionID].pokemonType,
+            whoseTurn: whoseTurn,
             isPlayerTurn: whoseTurn === clientSessionID ? true : false,
           },
           opponent: {
@@ -124,8 +124,8 @@ wss.on("connection", (ws) => {
         pokemonAttack: pokemon.stats[1].base_stat, // 1 is the pokemons attack power
         pokemonDefense: pokemon.stats[2].base_stat, // 2 is the pokemons attack power
 
-        gameOver: false,
-        winner: null,
+        // gameOver: false,
+        // winner: null,
       };
 
       clients
@@ -151,6 +151,7 @@ wss.on("connection", (ws) => {
                     }),
                   ),
                   pokemonType: gameState[sessionID].pokemonType,
+                  whoseTurn: whoseTurn,
                   isPlayerTurn: whoseTurn === sessionID ? true : false,
                 },
                 opponent: null,
@@ -172,6 +173,7 @@ wss.on("connection", (ws) => {
                     }),
                   ),
                   pokemonType: gameState[sessionID].pokemonType,
+                  whoseTurn: whoseTurn,
                   isPlayerTurn: whoseTurn === sessionID ? true : false,
                 },
                 opponent: {
@@ -249,6 +251,9 @@ wss.on("connection", (ws) => {
       0,
       gameState[opponentID].pokemonHp - damage,
     );
+    wss.clients.forEach((client) => {
+      client.send(JSON.stringify({ id: "movetype", type: attackType }));
+    });
 
     // when someone loses, game ends, gamestate is reset
     if (gameState[sessionID].pokemonHp === 0 || gameState[opponentID] === 0) {
@@ -275,6 +280,7 @@ wss.on("connection", (ws) => {
             }),
           ),
           pokemonType: gameState[sessionID].pokemonType,
+          whoseTurn: whoseTurn,
           isPlayerTurn: whoseTurn === sessionID ? true : false,
         },
         opponent: {
@@ -305,6 +311,7 @@ wss.on("connection", (ws) => {
             }),
           ),
           pokemonType: gameState[opponentID].pokemonType,
+          whoseTurn: whoseTurn,
           isPlayerTurn: whoseTurn === opponentID ? true : false,
         },
         opponent: {
@@ -335,6 +342,7 @@ wss.on("connection", (ws) => {
               power,
             }),
           ),
+          whoseTurn: whoseTurn,
           isPlayerTurn: whoseTurn === opponentID ? true : false,
         },
         opponent: {

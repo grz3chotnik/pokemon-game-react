@@ -1,0 +1,15 @@
+export const MOVE_ANIMATION = {
+  normal: "src/assets/Sprite-0001.gif",
+  fire: "src/assets/Sprite-0002.gif",
+  electric: "src/assets/Sprite-0003.gif",
+  water: "src/assets/Sprite-0004.gif",
+  ice: "src/assets/Sprite-0006.gif",
+  ground: "src/assets/Sprite-0013.gif",
+  fighting: "",
+  flying: "src/assets/Sprite-0007.gif",
+  ghost: "",
+  dark: "src/assets/Sprite-0009.gif",
+  rock: "src/assets/Sprite-0011.gif",
+  steel: "src/assets/Sprite-0008.gif",
+  grass: "src/assets/Sprite-0010.gif",
+};

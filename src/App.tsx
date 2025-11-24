@@ -5,11 +5,19 @@ import BattleScreen from "./components/BattleScreen.tsx";
 export default function App() {
   const WS_URL = import.meta.env.VITE_WS_URL || "ws://localhost:8080";
   const [gameState, setGameState] = useState();
-
-
+  const [isAnimationActive, setIsAnimationActive] = useState(false);
+  const [isGameOver, setIsGameOver] = useState<boolean>(false);
+  const [moveType, setMoveType] = useState();
   const handleExit = () => {
     wsRef.current?.send(JSON.stringify({ id: "exit" }));
     setGameState(null);
+  };
+
+  const animateAttack = () => {
+    setIsAnimationActive(true);
+    setTimeout(() => {
+      setIsAnimationActive(false);
+    }, 600);
   };
 
   const wsRef = useRef<WebSocket | null>(null);
@@ -31,7 +39,7 @@ export default function App() {
     wsClient.onmessage = (event) => {
       const data = JSON.parse(event.data);
       if (data.id === "gameOver") {
-        console.log(data.gameOver);
+        setIsGameOver(true)
         return;
       }
       if (data.id === "sessionID") {
@@ -39,18 +47,21 @@ export default function App() {
       }
 
       if (data.id === "gameupdate") {
-        console.log(data);
         setGameState((prevState) => ({ ...prevState, ...data }));
       }
 
       if (data.id === "attackupdate") {
         setGameState((prevState) => ({ ...prevState, ...data }));
+        animateAttack();
       }
 
       if (data.id === "exit") {
-        console.log("quit");
         localStorage.removeItem("sessionID");
         return;
+      }
+
+      if (data.id === "movetype") {
+        setMoveType(data.type)
       }
     };
 
@@ -64,8 +75,8 @@ export default function App() {
       }
     };
   }, []);
-  console.log(gameState);
   const attackEnemy = (moveName) => {
+
     wsRef.current?.send(
       JSON.stringify({
         id: "attack",
@@ -76,11 +87,14 @@ export default function App() {
   };
   return (
     <div className="maindiv">
-
       <BattleScreen
         gameState={gameState}
         attackEnemy={attackEnemy}
         handleExit={handleExit}
+        animateAttack={animateAttack}
+        isAnimationActive = {isAnimationActive}
+        isGameOver = {isGameOver}
+        moveType={moveType}
       />
     </div>
   );

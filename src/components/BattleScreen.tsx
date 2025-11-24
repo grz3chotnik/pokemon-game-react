@@ -1,6 +1,9 @@
 import "../App.css";
 import PokemonInfo from "./PokemonInfo.tsx";
-import { useState } from "react";
+import React, { useState } from "react";
+import { motion } from "motion/react";
+import { MOVE_ANIMATION } from "../../config/moveAnimationMap.ts";
+import { FILTER_EFFECT } from "../../config/filterEffectMap.ts";
 
 interface Move {
   name: string;
@@ -29,13 +32,26 @@ interface BattleScreenProps {
       pokemonImageURL: string;
       pokemonMoves: Move[];
       isPlayerTurn: boolean;
+      whoseTurn: string;
     };
   };
-  attackEnemy: (move: string) => void;
-  handleExit: () => void
+  attackEnemy: (moveName: string) => void;
+  handleExit: () => void;
+  animateAttack: () => void;
+  isAnimationActive: boolean;
+  isGameOver: boolean;
+  moveType: string;
 }
 
-const BattleScreen = ({ gameState, attackEnemy, handleExit}: BattleScreenProps) => {
+const BattleScreen = ({
+  gameState,
+  attackEnemy,
+  handleExit,
+  animateAttack,
+  isAnimationActive,
+  isGameOver,
+  moveType,
+}: BattleScreenProps) => {
   const [menuState, setMenuState] = useState<string>("main");
   const [hoveredMove, setHoveredMove] = useState<number>(0);
 
@@ -43,12 +59,17 @@ const BattleScreen = ({ gameState, attackEnemy, handleExit}: BattleScreenProps) 
     return <p>loading...</p>;
   }
 
+  if (isGameOver) {
+    return <p>game over</p>;
+  }
+
   return (
     <div className="maindiv">
-      <button className="endgamebutton"
-              onClick={() => {
-                handleExit()
-              }}
+      <button
+        className="endgamebutton"
+        onClick={() => {
+          handleExit();
+        }}
       >
         end game
       </button>
@@ -61,31 +82,92 @@ const BattleScreen = ({ gameState, attackEnemy, handleExit}: BattleScreenProps) 
             maxHP={gameState?.opponent?.pokemonMaxHp ?? "-"}
           />
           <div>
-            <div className="pokemon1img">
-              <img
-                src={gameState?.player.pokemonBackImageURL}
-                height="350px"
-                width="350px"
-                alt="pokemon1"
-              />
-            </div>
+            <motion.div
+              animate={
+                isAnimationActive &&
+                gameState?.player.whoseTurn ===
+                  localStorage.getItem("sessionID")
+                  ? { y: [0, -50, 0] }
+                  : isAnimationActive &&
+                      gameState?.player.whoseTurn !==
+                        localStorage.getItem("sessionID")
+                    ? { y: [0, -50, 0], rotate: [0, 10, -10, 0] }
+                    : { x: 0, y: 0, rotate: 0, opacity: 1 }
+              }
+              transition={{ duration: 0.3, delay: 0, ease: "easeInOut" }}
+            >
+              <div className="pokemon1img">
+                <img
+                  src={gameState?.player.pokemonBackImageURL}
+                  height="350px"
+                  width="350px"
+                  alt="pokemon1"
+                  style={
+                    isAnimationActive &&
+                    gameState.player.whoseTurn ===
+                      localStorage.getItem("sessionID")
+                      ? { filter: FILTER_EFFECT[moveType] }
+                      : undefined
+                  }
+                />
+
+                {gameState.player.whoseTurn ===
+                  localStorage.getItem("sessionID") && (
+                  <img
+                    src={isAnimationActive ? MOVE_ANIMATION[moveType] : ""}
+                    height="200px"
+                    className="attackimg2"
+                  />
+                )}
+              </div>
+            </motion.div>
           </div>
         </div>
 
         <div className="player2">
           <div>
-            <div className="pokemon2img">
-              {!gameState?.opponent ? (
-                <p>player2 joining..</p>
-              ) : (
-                <img
-                  src={gameState?.opponent.pokemonImageURL}
-                  height="350px"
-                  width="350px"
-                  alt="pokemon2"
-                />
-              )}
-            </div>
+            <motion.div
+              animate={
+                isAnimationActive &&
+                gameState?.player.whoseTurn ===
+                  localStorage.getItem("sessionID")
+                  ? { y: [0, -50, 0], rotate: [0, 10, -10, 0] }
+                  : isAnimationActive &&
+                      gameState?.player.whoseTurn !==
+                        localStorage.getItem("sessionID")
+                    ? { y: [0, -50, 0] }
+                    : { x: 0, y: 0, rotate: 0, opacity: 1 }
+              }
+              transition={{ duration: 0.3, delay: 0, ease: "easeInOut" }}
+            >
+              <div className="pokemon2img">
+                {!gameState?.opponent ? (
+                  <p>player2 joining..</p>
+                ) : (
+                  <img
+                    src={gameState?.opponent.pokemonImageURL}
+                    height="350px"
+                    width="350px"
+                    alt="pokemon2"
+                    style={
+                      isAnimationActive &&
+                      gameState.player.whoseTurn !==
+                        localStorage.getItem("sessionID")
+                        ? { filter: FILTER_EFFECT[moveType] }
+                        : undefined
+                    }
+                  />
+                )}
+                {gameState.player.whoseTurn !==
+                  localStorage.getItem("sessionID") && (
+                  <img
+                    src={isAnimationActive ? MOVE_ANIMATION[moveType] : ""}
+                    height="200px"
+                    className="attackimg2"
+                  />
+                )}
+              </div>
+            </motion.div>
           </div>
 
           <PokemonInfo
@@ -130,6 +212,8 @@ const BattleScreen = ({ gameState, attackEnemy, handleExit}: BattleScreenProps) 
                   onClick={() => {
                     setMenuState("main");
                     attackEnemy(move.name);
+                    animateAttack();
+
                   }}
                   onMouseEnter={() => {
                     setHoveredMove(index);
