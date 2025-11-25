@@ -1,9 +1,9 @@
 export default function PokemonInfo({
-  pokemon,
+  pokemonName,
   pokemonHP,
   maxHP,
 }: {
-  pokemon: string;
+  pokemonName: string;
   pokemonHP: number;
   maxHP: number;
 }) {
@@ -12,7 +12,7 @@ export default function PokemonInfo({
   return (
     <div className="playerinfo">
       <div className="pokemonname">
-        <p>{pokemon}</p>
+        <p>{pokemonName}</p>
       </div>
 
       <div className="healthbardiv">

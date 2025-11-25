@@ -4,7 +4,7 @@ import BattleScreen from "./components/BattleScreen.tsx";
 
 export default function App() {
   const WS_URL = import.meta.env.VITE_WS_URL || "ws://localhost:8080";
-  const [gameState, setGameState] = useState();
+  const [gameState, setGameState] = useState<object>();
   const [isAnimationActive, setIsAnimationActive] = useState(false);
   const [isGameOver, setIsGameOver] = useState<boolean>(false);
   const [moveType, setMoveType] = useState();

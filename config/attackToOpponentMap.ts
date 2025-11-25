@@ -117,7 +117,7 @@ export const ATTACK_TO_OPPONENT = {
     ground: "notEffective",
     flying: "effective",
     bug: "effective",
-    steam: "notEffective",
+    steel: "notEffective",
   },
   ghost: {
     normal: "noEffect",

@@ -3,7 +3,6 @@ import { v4 as uuidv4 } from "uuid";
 import { ATTACK_TO_OPPONENT } from "./config/attackToOpponentMap";
 const wss = new WebSocketServer({ port: 8080 });
 const BALANCE = 10;
-const RANDOM_FACTOR = Math.random() * (1 - 0.85) + 0.85;
 let whoseTurn;
 const enum WSMessage {
   Join = "join",
@@ -224,6 +223,8 @@ wss.on("connection", (ws) => {
     const opponentDefense = gameState[opponentID].pokemonDefense;
     const stab = attackType === gameState[sessionID].pokemonType ? 1.5 : 1;
     const effectiveness = ATTACK_TO_OPPONENT[attackType][opponentType];
+    const randomFactor = Math.random() * (1 - 0.85) + 0.85;
+
     const effectivenessToMultiplier = {
       noEffect: 0,
       effective: 2,
@@ -238,7 +239,7 @@ wss.on("connection", (ws) => {
       (((movePower * playerAttack) / opponentDefense) *
         stab *
         multiplier *
-        RANDOM_FACTOR) /
+        randomFactor) /
         BALANCE,
     );
 
@@ -256,7 +257,7 @@ wss.on("connection", (ws) => {
     });
 
     // when someone loses, game ends, gamestate is reset
-    if (gameState[sessionID].pokemonHp === 0 || gameState[opponentID] === 0) {
+    if (gameState[sessionID].pokemonHp === 0 || gameState[opponentID].pokemonHp === 0) {
       console.log("game over");
       gameState = {};
       ws.send(JSON.stringify({ id: "gameOver", gameOver: true }));

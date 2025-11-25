@@ -1,6 +1,6 @@
 import "../App.css";
 import PokemonInfo from "./PokemonInfo.tsx";
-import React, { useState } from "react";
+import { useState } from "react";
 import { motion } from "motion/react";
 import { MOVE_ANIMATION } from "../../config/moveAnimationMap.ts";
 import { FILTER_EFFECT } from "../../config/filterEffectMap.ts";
@@ -43,6 +43,13 @@ interface BattleScreenProps {
   moveType: string;
 }
 
+enum MenuState {
+  Main = "main",
+  Moves = "moves"
+}
+
+
+
 const BattleScreen = ({
   gameState,
   attackEnemy,
@@ -52,7 +59,7 @@ const BattleScreen = ({
   isGameOver,
   moveType,
 }: BattleScreenProps) => {
-  const [menuState, setMenuState] = useState<string>("main");
+  const [menuState, setMenuState] = useState<MenuState>(MenuState.Main);
   const [hoveredMove, setHoveredMove] = useState<number>(0);
 
   if (!gameState) {
@@ -77,7 +84,7 @@ const BattleScreen = ({
       <div className="gamediv">
         <div className="player1">
           <PokemonInfo
-            pokemon={gameState?.opponent?.name ?? ""}
+            pokemonName={gameState?.opponent?.name ?? ""}
             pokemonHP={gameState?.opponent?.pokemonHp ?? "-"}
             maxHP={gameState?.opponent?.pokemonMaxHp ?? "-"}
           />
@@ -171,7 +178,7 @@ const BattleScreen = ({
           </div>
 
           <PokemonInfo
-            pokemon={gameState?.player.name}
+            pokemonName={gameState?.player.name}
             pokemonHP={gameState?.player.pokemonHp}
             maxHP={gameState?.player.pokemonMaxHp}
           />
@@ -184,7 +191,7 @@ const BattleScreen = ({
             <div className="text">text here</div>
             <div className="menu">
               <button
-                onClick={() => setMenuState("moves")}
+                onClick={() => setMenuState(MenuState.Moves)}
                 className="attackbutton"
               >
                 FIGHT
@@ -207,10 +214,11 @@ const BattleScreen = ({
             <div className="moves">
               {gameState.player.pokemonMoves.map((move, index) => (
                 <button
+                  key={move.name}
                   disabled={gameState.player.isPlayerTurn === false}
                   className="attackbutton"
                   onClick={() => {
-                    setMenuState("main");
+                    setMenuState(MenuState.Main);
                     attackEnemy(move.name);
                     animateAttack();
 
