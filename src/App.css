@@ -59,30 +59,6 @@ p {
     font-size: 24px;
 }
 
-
-.pokemon1 {
-    display: flex;
-    flex-direction: column;
-    width: 25%;
-    image-rendering: pixelated;
-
-}
-
-.pokemon2 {
-    display: flex;
-    flex-direction: column;
-    width: 25%;
-    image-rendering: pixelated;
-}
-
-.pokemons {
-    display: flex;
-    flex-direction: row;
-    gap: 100px;
-    align-items: center;
-    justify-content: center;
-}
-
 .pokemonname {
     color: #4C4254;
     display: flex;
@@ -228,7 +204,7 @@ p {
 }
 
 
-.player1 {
+.playerLeft {
     display: flex;
     flex-direction: column;
     justify-content: end;
@@ -239,7 +215,7 @@ p {
 }
 
 
-.player2 {
+.playerRight {
     display: flex;
     flex-direction: column;
     justify-content: end;
@@ -250,7 +226,7 @@ p {
     gap: 30px;
 }
 
-.playerinfo {
+.playerInfo {
     display: flex;
     flex-direction: column;
     justify-content: space-between;
@@ -263,19 +239,16 @@ p {
     z-index: 10;
 }
 
-.player2info {
-    margin-bottom: 25px;
+
+.playerLeft .playerInfo {
 }
 
-.player1 .playerinfo {
-}
-
-.player2 .playerinfo {
+.playerRight .playerInfo {
     align-self: start;
 }
 
 
-.pokemon2img {
+.playerRightImage {
     width: 150px;
     height: 150px;
     display: flex;
@@ -286,7 +259,7 @@ p {
 
 }
 
-.pokemon1img {
+.playerLeftImage {
     width: 250px;
     height: 250px;
     display: flex;
@@ -299,12 +272,12 @@ p {
 
 
 
-.attackimg {
+.attackImageRight {
     position: absolute;
     z-index: 6;
     pointer-events: none;
 }
-.attackimg2 {
+.attackImageLeft {
     position: absolute;
     z-index: 6;
     pointer-events: none;

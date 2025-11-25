@@ -82,7 +82,7 @@ const BattleScreen = ({
       </button>
       {gameState.gameOver && <h2>winner: {gameState.winner}</h2>}
       <div className="gamediv">
-        <div className="player1">
+        <div className="playerLeft">
           <PokemonInfo
             pokemonName={gameState?.opponent?.name ?? ""}
             pokemonHP={gameState?.opponent?.pokemonHp ?? "-"}
@@ -103,7 +103,7 @@ const BattleScreen = ({
               }
               transition={{ duration: 0.3, delay: 0, ease: "easeInOut" }}
             >
-              <div className="pokemon1img">
+              <div className="playerLeftImage">
                 <img
                   src={gameState?.player.pokemonBackImageURL}
                   height="350px"
@@ -123,7 +123,7 @@ const BattleScreen = ({
                   <img
                     src={isAnimationActive ? MOVE_ANIMATION[moveType] : ""}
                     height="200px"
-                    className="attackimg2"
+                    className="attackImageLeft"
                   />
                 )}
               </div>
@@ -131,7 +131,7 @@ const BattleScreen = ({
           </div>
         </div>
 
-        <div className="player2">
+        <div className="playerRight">
           <div>
             <motion.div
               animate={
@@ -147,7 +147,7 @@ const BattleScreen = ({
               }
               transition={{ duration: 0.3, delay: 0, ease: "easeInOut" }}
             >
-              <div className="pokemon2img">
+              <div className="playerRightImage">
                 {!gameState?.opponent ? (
                   <p>player2 joining..</p>
                 ) : (
@@ -170,7 +170,7 @@ const BattleScreen = ({
                   <img
                     src={isAnimationActive ? MOVE_ANIMATION[moveType] : ""}
                     height="200px"
-                    className="attackimg2"
+                    className="attackImageLeft"
                   />
                 )}
               </div>

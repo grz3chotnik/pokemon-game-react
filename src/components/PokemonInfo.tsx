@@ -10,7 +10,7 @@ export default function PokemonInfo({
   const hpPercent = (pokemonHP / maxHP) * 100;
 
   return (
-    <div className="playerinfo">
+    <div className="playerInfo">
       <div className="pokemonname">
         <p>{pokemonName}</p>
       </div>
