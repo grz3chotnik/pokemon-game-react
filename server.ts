@@ -45,10 +45,8 @@ const clients = new Map();
 let inactivityTimer = null;
 
 const resetInactivityTimer = () => {
-  console.log("inactivity timer reset");
   clearTimeout(inactivityTimer);
   inactivityTimer = setTimeout(() => {
-    console.log("game closed because no activity");
     gameState = {};
   }, 1500000);
 };
@@ -56,7 +54,6 @@ const resetInactivityTimer = () => {
 wss.on("connection", (ws) => {
   const handleJoin = async (clientSessionID: string) => {
     if (Object.keys(gameState).length > 1 && !gameState[clientSessionID]) {
-      console.log("error, 2 players already here");
       return;
     }
     resetInactivityTimer();
@@ -72,9 +69,6 @@ wss.on("connection", (ws) => {
       (element) => element !== clientSessionID,
     )[0];
     if (clientSessionID) {
-      // clientSessionID = JSON.parse(clientSessionID);
-      console.log(clientSessionID);
-      console.log(gameState);
       clients.set(clientSessionID, ws);
       clients.get(clientSessionID).send(
         JSON.stringify({
@@ -122,9 +116,6 @@ wss.on("connection", (ws) => {
         pokemonType: pokemon.types[0].type.name,
         pokemonAttack: pokemon.stats[1].base_stat, // 1 is the pokemons attack power
         pokemonDefense: pokemon.stats[2].base_stat, // 2 is the pokemons attack power
-
-        // gameOver: false,
-        // winner: null,
       };
 
       clients
@@ -212,7 +203,6 @@ wss.on("connection", (ws) => {
   };
 
   const handleAttack = (attackName, sessionID) => {
-    console.log("attack used");
     resetInactivityTimer();
     const opponentID = Object.keys(gameState).find((id) => id !== sessionID);
     const opponentType = gameState[opponentID]?.pokemonType;
@@ -258,7 +248,6 @@ wss.on("connection", (ws) => {
 
     // when someone loses, game ends, gamestate is reset
     if (gameState[sessionID].pokemonHp === 0 || gameState[opponentID].pokemonHp === 0) {
-      console.log("game over");
       gameState = {};
       ws.send(JSON.stringify({ id: "gameOver", gameOver: true }));
       return;
@@ -359,7 +348,6 @@ wss.on("connection", (ws) => {
   };
 
   const handleExit = () => {
-    //resetting the gamestate, clearing clients map
     gameState = {};
     clients.clear();
 
