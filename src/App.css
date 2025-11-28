@@ -1,0 +1,329 @@
+* {
+    margin: 0;
+
+    padding: 0;
+
+    box-sizing: border-box;
+}
+
+
+p {
+
+    font-size: 25px;
+    text-align: left;
+
+}
+
+
+.attackbutton {
+    color: #4C4154;
+    text-shadow: 2px 3px #D0CCCD;
+    /*padding-left: 15px;*/
+    font-size: 15px;
+    border: 0;
+    border-radius: 0;
+    background-color: transparent;
+    height: 100%;
+    text-align: left;
+    justify-content: start;
+    align-items: center;
+    display: flex;
+    flex-direction: row;
+    padding-left: 25px;
+
+}
+
+/*.attackbutton:hover {*/
+/*    color: #9a92a1*/
+
+/*}*/
+
+.attackbutton:disabled {
+    color: rgba(76, 65, 84, 0.24);
+    text-shadow: 2px 3px rgba(0, 0, 0, 0);
+}
+
+
+.attackbutton img {
+    filter: drop-shadow(2px 3px 0px #D0CCCD);
+    padding-right: 5px;
+}
+
+
+.maindiv {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    width: 100vw;
+    font-size: 24px;
+}
+
+.pokemonname {
+    color: #4C4254;
+    display: flex;
+    flex-direction: row;
+    justify-content: start;
+    white-space: nowrap;
+    overflow: clip;
+    text-overflow: ellipsis;
+}
+
+.healthbardiv {
+    display: flex;
+    justify-content: end;
+
+}
+
+.healthbardiv + p {
+    font-size: 16px;
+    display: flex;
+    align-self: end;
+}
+
+.outerhealthbar {
+    background-color: #4A5547;
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    width: 70%;
+    border-radius: 8px;
+    padding: 0 10px 0 10px;
+}
+
+.outerhealthbar p {
+    color: #F3B174;
+
+    font-size: 15px;
+}
+
+.healthbar {
+    width: 100%;
+    background-color: red;
+    border: 2px solid white;
+
+
+}
+
+.health {
+    background-color: #4DCD7A;
+    height: 6px;
+    width: 100%;
+}
+
+
+.gamediv {
+    display: flex;
+    flex-direction: row;
+    image-rendering: pixelated;
+    justify-content: center;
+    align-items: center;
+    gap: 40px;
+    width: 800px;
+    border: 3px solid black;
+    background-color: #f2ffe6;
+    background-image: url("public/assets/background.svg");
+    background-size: 870px;
+    background-repeat: no-repeat;
+    background-position: center center;
+}
+
+.infodiv {
+    display: flex;
+    flex-direction: row;
+    justify-content: center;
+    align-items: center;
+    width: 800px;
+    height: 150px;
+    background: #f8f8f8;
+    border: 3px solid #4B4057;
+    text-align: left;
+    z-index: 10;
+
+}
+
+.moves {
+    display: grid;
+    justify-content: start;
+    place-items: start;
+    grid-template-columns: 200px 200px;
+    background-color: #FFF9FA;
+    border: 6px solid #252B34;
+    box-shadow: 0px 0 0 6px #726782 inset;
+    height: 100%;
+    /*padding-left: 25px;*/
+}
+
+.movesstats {
+    color: #4C4154;
+    background-color: #FFF9FA;
+    border: 6px solid #252B34;
+    box-shadow: 0px 0 0 6px #726782 inset;
+    height: 100%;
+    width: 50%;
+    display: flex;
+    flex-direction: column;
+    padding: 20px;
+    align-items: start;
+    gap: 15px;
+
+}
+.movesstats p {
+    font-size: 25px;
+
+    text-shadow: 4px 4px #D0CCCD;
+
+}
+
+.menu {
+    display: grid;
+    justify-content: center;
+    place-items: center;
+    grid-template-columns: 200px 200px;
+    background-color: #FFF9FA;
+    border: 6px solid #252B34;
+    box-shadow: 0px 0 0 6px #726782 inset;
+    height: 100%;
+    width: 100%;
+}
+
+.text {
+    display: flex;
+    border: 6px solid #726782;
+    box-shadow: 15px 0 0 6px #CF4538 inset;
+
+    padding-left: 25px;
+    background-color: #669FA1;
+    width: 100%;
+    height: 100%;
+    align-items: center;
+    justify-content: start;
+    color: #FFF9FA;
+    z-index: 10;
+    text-shadow: 4px 4px #675879;
+
+}
+
+.text p {
+    text-shadow: 4px 4px #675879;
+}
+
+
+.playerArea {
+    display: flex;
+    flex-direction: column;
+    justify-content: end;
+    align-items: center;
+    width: 400px;
+    height: 400px;
+    gap: 100px;
+}
+
+
+.opponentArea {
+    display: flex;
+    flex-direction: column;
+    justify-content: end;
+    align-items: center;
+    width: 400px;
+    height: 400px;
+    padding-bottom: 30px;
+    gap: 30px;
+}
+
+.playerInfo {
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    height: 110px;
+    width: 300px;
+    background-color: #F9F7D1;
+    border: 6px solid #133A00;
+    box-shadow: -10px 10px 0px #4C6862;
+    padding: 10px;
+    z-index: 10;
+}
+
+
+.playerArea .playerInfo {
+}
+
+.opponentArea .playerInfo {
+    align-self: start;
+}
+
+
+.opponentImageContainer {
+    width: 150px;
+    height: 150px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1;
+    position: relative;
+
+}
+
+.playerLeftImage {
+    width: 250px;
+    height: 250px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: -80px;
+    z-index: 1;
+    position: relative;
+}
+
+
+
+.attackImageRight {
+    position: absolute;
+    z-index: 6;
+    pointer-events: none;
+}
+.playerAttackAnimation {
+    position: absolute;
+    z-index: 6;
+    pointer-events: none;
+}
+
+.attack {
+    animation: myAnim 0.4s 0s 1;
+
+}
+
+.endgamebutton {
+    background-color: red;
+    color: white;
+    border-radius: 0;
+    padding: 5px;
+}
+
+@keyframes myAnim {
+    0%,
+    100% {
+        transform: translateX(0);
+    }
+
+    10%,
+    30%,
+    50%,
+    70% {
+        transform: translateX(-10px);
+    }
+
+    20%,
+    40%,
+    60% {
+        transform: translateX(10px);
+    }
+
+    80% {
+        transform: translateX(8px);
+    }
+
+    90% {
+        transform: translateX(-8px);
+    }
+}

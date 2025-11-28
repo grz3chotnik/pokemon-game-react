@@ -1,0 +1,15 @@
+export const MOVE_ANIMATION: Record<string, string> = {
+  normal: "/assets/Sprite-0001.gif",
+  fire: "/assets/Sprite-0002.gif",
+  electric: "/assets/Sprite-0003.gif",
+  water: "/assets/Sprite-0004.gif",
+  ice: "/assets/Sprite-0006.gif",
+  ground: "/assets/Sprite-0013.gif",
+  fighting: "",
+  flying: "/assets/Sprite-0007.gif",
+  ghost: "",
+  dark: "/assets/Sprite-0009.gif",
+  rock: "/assets/Sprite-0011.gif",
+  steel: "/assets/Sprite-0008.gif",
+  grass: "/assets/Sprite-0010.gif",
+};
