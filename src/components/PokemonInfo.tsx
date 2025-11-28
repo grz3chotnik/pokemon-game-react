@@ -1,18 +1,23 @@
-export default function PokemonInfo({
-  pokemonName,
-  pokemonHP,
-  maxHP,
-}: {
-  pokemonName: string;
-  pokemonHP: number;
-  maxHP: number;
-}) {
-  const hpPercent = (pokemonHP / maxHP) * 100;
+interface PokemonInfoProps {
+  name?: string;
+  hp?: number;
+  maxHP?: number;
+}
+
+const PokemonInfo = ({ name, hp = 100, maxHP = 100 }: PokemonInfoProps) => {
+  const hpPercent = (hp / maxHP) * 100;
+  const hpLabel = name ? `${hp}/${maxHP}` : `-/-`;
 
   return (
     <div className="playerInfo">
       <div className="pokemonname">
-        <p>{pokemonName}</p>
+        <p
+          style={{
+            height: "37.5px",
+          }}
+        >
+          {name}
+        </p>
       </div>
 
       <div className="healthbardiv">
@@ -23,9 +28,9 @@ export default function PokemonInfo({
           </div>
         </div>
       </div>
-      <p>
-        {pokemonHP}/{maxHP}{" "}
-      </p>
+      <p>{hpLabel}</p>
     </div>
   );
-}
+};
+
+export default PokemonInfo;

@@ -1,19 +1,21 @@
 import "./App.css";
 import { useEffect, useRef, useState } from "react";
+import merge from "lodash.merge";
 import BattleScreen from "./components/BattleScreen.tsx";
+import type { GameState, Move } from "./types/gameState.ts";
 
 export default function App() {
   const WS_URL = import.meta.env.VITE_WS_URL || "ws://localhost:8080";
-  const [gameState, setGameState] = useState<object>();
+  const [gameState, setGameState] = useState<GameState | null>(null);
+  const [moveType, setMoveType] = useState<string>("");
   const [isAnimationActive, setIsAnimationActive] = useState(false);
-  const [isGameOver, setIsGameOver] = useState<boolean>(false);
-  const [moveType, setMoveType] = useState();
+
   const handleExit = () => {
     wsRef.current?.send(JSON.stringify({ id: "exit" }));
     setGameState(null);
   };
 
-  const animateAttack = () => {
+  const handleAnimateAttack = () => {
     setIsAnimationActive(true);
     setTimeout(() => {
       setIsAnimationActive(false);
@@ -38,30 +40,31 @@ export default function App() {
 
     wsClient.onmessage = (event) => {
       const data = JSON.parse(event.data);
-      if (data.id === "gameOver") {
-        setIsGameOver(true)
-        return;
-      }
+
       if (data.id === "sessionID") {
         localStorage.setItem("sessionID", data.sessionID);
       }
 
-      if (data.id === "gameupdate") {
-        setGameState((prevState) => ({ ...prevState, ...data }));
+      if (data.id === "gameStateUpdate") {
+        setGameState((prevState) => merge({}, prevState, data));
+        console.log(gameState);
       }
 
-      if (data.id === "attackupdate") {
-        setGameState((prevState) => ({ ...prevState, ...data }));
-        animateAttack();
+      if (data.id === "attackUpdate") {
+        setGameState((prevState) => merge({}, prevState, data));
+
+        handleAnimateAttack();
+        console.log(gameState);
       }
 
       if (data.id === "exit") {
         localStorage.removeItem("sessionID");
+        setGameState(null);
         return;
       }
 
-      if (data.id === "movetype") {
-        setMoveType(data.type)
+      if (data.id === "moveType") {
+        setMoveType(data.type);
       }
     };
 
@@ -75,8 +78,8 @@ export default function App() {
       }
     };
   }, []);
-  const attackEnemy = (moveName) => {
 
+  const handleAttackEnemy = (moveName: Move["name"]) => {
     wsRef.current?.send(
       JSON.stringify({
         id: "attack",
@@ -85,15 +88,19 @@ export default function App() {
       }),
     );
   };
+
+  if (!gameState) {
+    return "loading state";
+  }
+
   return (
     <div className="maindiv">
       <BattleScreen
         gameState={gameState}
-        attackEnemy={attackEnemy}
+        onAttackEnemy={handleAttackEnemy}
         handleExit={handleExit}
-        animateAttack={animateAttack}
-        isAnimationActive = {isAnimationActive}
-        isGameOver = {isGameOver}
+        onAnimateAttack={handleAnimateAttack}
+        isAnimationActive={isAnimationActive}
         moveType={moveType}
       />
     </div>

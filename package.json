@@ -15,6 +15,7 @@
     "axios": "^1.12.2",
     "axios-cache-interceptor": "^1.8.3",
     "dotenv": "^17.2.3",
+    "lodash.merge": "^4.6.2",
     "motion": "^12.23.24",
     "pokenode-ts": "^1.20.0",
     "react": "^19.1.1",
@@ -25,6 +26,7 @@
   },
   "devDependencies": {
     "@eslint/js": "^9.36.0",
+    "@types/lodash.merge": "^4.6.9",
     "@types/node": "^24.6.0",
     "@types/react": "^19.1.16",
     "@types/react-dom": "^19.1.9",

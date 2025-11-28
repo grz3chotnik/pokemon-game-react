@@ -4,71 +4,55 @@ import { useState } from "react";
 import { motion } from "motion/react";
 import { MOVE_ANIMATION } from "../../config/moveAnimationMap.ts";
 import { FILTER_EFFECT } from "../../config/filterEffectMap.ts";
-
-interface Move {
-  name: string;
-  power: number;
-  type: string;
-}
+import type { GameState, Move } from "../types/gameState.ts";
 
 interface BattleScreenProps {
-  gameState: {
-    gameOver: boolean;
-    winner: boolean;
-    opponent: {
-      name: string;
-      pokemonHp: number;
-      pokemonMaxHp: number;
-      pokemonBackImageURL: string;
-      pokemonImageURL: string;
-      gameOver: boolean;
-      winner: boolean;
-    };
-    player: {
-      name: string;
-      pokemonHp: number;
-      pokemonMaxHp: number;
-      pokemonBackImageURL: string;
-      pokemonImageURL: string;
-      pokemonMoves: Move[];
-      isPlayerTurn: boolean;
-      whoseTurn: string;
-    };
-  };
-  attackEnemy: (moveName: string) => void;
+  gameState: GameState;
+  onAttackEnemy: (moveName: string) => void;
   handleExit: () => void;
-  animateAttack: () => void;
-  isAnimationActive: boolean;
-  isGameOver: boolean;
   moveType: string;
+  onAnimateAttack: () => void;
+  isAnimationActive: boolean;
 }
 
 enum MenuState {
   Main = "main",
-  Moves = "moves"
+  Moves = "moves",
 }
 
-
+const attackAnimation = { y: [0, -50, 0], rotate: [0, 10, -10, 0] };
+const defenseAnimation = { y: [0, -50, 0] };
 
 const BattleScreen = ({
   gameState,
-  attackEnemy,
+  onAttackEnemy,
   handleExit,
-  animateAttack,
-  isAnimationActive,
-  isGameOver,
   moveType,
+  onAnimateAttack,
+  isAnimationActive,
 }: BattleScreenProps) => {
   const [menuState, setMenuState] = useState<MenuState>(MenuState.Main);
   const [hoveredMove, setHoveredMove] = useState<number>(0);
 
-  if (!gameState) {
-    return <p>loading...</p>;
-  }
+  const getAttackAnimationConfig = () => {
+    if (!isAnimationActive) {
+      return { x: 0, y: 0, rotate: 0, opacity: 1 };
+    }
 
-  if (isGameOver) {
-    return <p>game over</p>;
-  }
+    if (!gameState.isPlayerTurn) {
+      return attackAnimation;
+    }
+
+    if (gameState.isPlayerTurn) {
+      return defenseAnimation;
+    }
+  };
+
+  const handleAttack = (moveName: Move["name"]) => {
+    setMenuState(MenuState.Main);
+    onAttackEnemy(moveName);
+    onAnimateAttack();
+  };
 
   return (
     <div className="maindiv">
@@ -80,27 +64,19 @@ const BattleScreen = ({
       >
         end game
       </button>
-      {gameState.gameOver && <h2>winner: {gameState.winner}</h2>}
+      {gameState.winnerPokemonName && (
+        <h2>winner: {gameState.winnerPokemonName}</h2>
+      )}
       <div className="gamediv">
-        <div className="playerLeft">
+        <div className="playerArea">
           <PokemonInfo
-            pokemonName={gameState?.opponent?.name ?? ""}
-            pokemonHP={gameState?.opponent?.pokemonHp ?? "-"}
-            maxHP={gameState?.opponent?.pokemonMaxHp ?? "-"}
+            name={gameState?.opponent?.name}
+            hp={gameState?.opponent?.pokemonHp}
+            maxHP={gameState?.opponent?.pokemonMaxHp}
           />
           <div>
             <motion.div
-              animate={
-                isAnimationActive &&
-                gameState?.player.whoseTurn ===
-                  localStorage.getItem("sessionID")
-                  ? { y: [0, -50, 0] }
-                  : isAnimationActive &&
-                      gameState?.player.whoseTurn !==
-                        localStorage.getItem("sessionID")
-                    ? { y: [0, -50, 0], rotate: [0, 10, -10, 0] }
-                    : { x: 0, y: 0, rotate: 0, opacity: 1 }
-              }
+              animate={getAttackAnimationConfig()}
               transition={{ duration: 0.3, delay: 0, ease: "easeInOut" }}
             >
               <div className="playerLeftImage">
@@ -109,21 +85,21 @@ const BattleScreen = ({
                   height="350px"
                   width="350px"
                   alt="pokemon1"
-                  style={
-                    isAnimationActive &&
-                    gameState.player.whoseTurn ===
-                      localStorage.getItem("sessionID")
-                      ? { filter: FILTER_EFFECT[moveType] }
-                      : undefined
-                  }
+                  style={{
+                    filter:
+                      isAnimationActive && !gameState.isPlayerTurn
+                        ? FILTER_EFFECT[moveType]
+                        : undefined,
+                  }}
                 />
 
-                {gameState.player.whoseTurn ===
-                  localStorage.getItem("sessionID") && (
+                {!gameState.isPlayerTurn && (
                   <img
-                    src={isAnimationActive ? MOVE_ANIMATION[moveType] : ""}
+                    src={
+                      isAnimationActive ? MOVE_ANIMATION[moveType] : undefined
+                    }
                     height="200px"
-                    className="attackImageLeft"
+                    className="playerAttackAnimation"
                   />
                 )}
               </div>
@@ -131,46 +107,35 @@ const BattleScreen = ({
           </div>
         </div>
 
-        <div className="playerRight">
+        <div className="opponentArea">
           <div>
             <motion.div
-              animate={
-                isAnimationActive &&
-                gameState?.player.whoseTurn ===
-                  localStorage.getItem("sessionID")
-                  ? { y: [0, -50, 0], rotate: [0, 10, -10, 0] }
-                  : isAnimationActive &&
-                      gameState?.player.whoseTurn !==
-                        localStorage.getItem("sessionID")
-                    ? { y: [0, -50, 0] }
-                    : { x: 0, y: 0, rotate: 0, opacity: 1 }
-              }
+              animate={getAttackAnimationConfig()}
               transition={{ duration: 0.3, delay: 0, ease: "easeInOut" }}
             >
-              <div className="playerRightImage">
+              <div className="opponentImageContainer">
                 {!gameState?.opponent ? (
-                  <p>player2 joining..</p>
+                  <p>loading...</p>
                 ) : (
                   <img
                     src={gameState?.opponent.pokemonImageURL}
                     height="350px"
                     width="350px"
-                    alt="pokemon2"
+                    alt="Opponent Image"
                     style={
-                      isAnimationActive &&
-                      gameState.player.whoseTurn !==
-                        localStorage.getItem("sessionID")
+                      isAnimationActive && gameState.isPlayerTurn
                         ? { filter: FILTER_EFFECT[moveType] }
                         : undefined
                     }
                   />
                 )}
-                {gameState.player.whoseTurn !==
-                  localStorage.getItem("sessionID") && (
+                {gameState.isPlayerTurn && (
                   <img
-                    src={isAnimationActive ? MOVE_ANIMATION[moveType] : ""}
+                    src={
+                      isAnimationActive ? MOVE_ANIMATION[moveType] : undefined
+                    }
                     height="200px"
-                    className="attackImageLeft"
+                    className="playerAttackAnimation"
                   />
                 )}
               </div>
@@ -178,17 +143,17 @@ const BattleScreen = ({
           </div>
 
           <PokemonInfo
-            pokemonName={gameState?.player.name}
-            pokemonHP={gameState?.player.pokemonHp}
+            name={gameState?.player.name}
+            hp={gameState?.player.pokemonHp}
             maxHP={gameState?.player.pokemonMaxHp}
           />
         </div>
       </div>
 
       <div className="infodiv">
-        {menuState === "main" && (
+        {menuState === MenuState.Main && (
           <>
-            <div className="text">text here</div>
+            <div className="text">what will {gameState.player.name} do? </div>
             <div className="menu">
               <button
                 onClick={() => setMenuState(MenuState.Moves)}
@@ -209,20 +174,15 @@ const BattleScreen = ({
           </>
         )}
 
-        {menuState === "moves" && (
+        {menuState === MenuState.Moves && (
           <>
             <div className="moves">
               {gameState.player.pokemonMoves.map((move, index) => (
                 <button
                   key={move.name}
-                  disabled={gameState.player.isPlayerTurn === false}
+                  disabled={gameState.isPlayerTurn}
                   className="attackbutton"
-                  onClick={() => {
-                    setMenuState(MenuState.Main);
-                    attackEnemy(move.name);
-                    animateAttack();
-
-                  }}
+                  onClick={() => handleAttack(move.name)}
                   onMouseEnter={() => {
                     setHoveredMove(index);
                   }}
@@ -232,7 +192,7 @@ const BattleScreen = ({
               ))}
             </div>
             <div className="movesstats">
-              <p>PP: {gameState.player.pokemonMoves[hoveredMove]?.power}</p>
+              <p>Power: {gameState.player.pokemonMoves[hoveredMove]?.power}</p>
               <p>
                 TYPE/
                 {gameState.player.pokemonMoves[hoveredMove]?.type.toUpperCase()}

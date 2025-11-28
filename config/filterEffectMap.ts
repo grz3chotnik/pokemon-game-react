@@ -1,4 +1,4 @@
-export const FILTER_EFFECT = {
+export const FILTER_EFFECT: Record<string, string> = {
   dark: "invert(100%)",
   fire: "brightness(70%) saturate(000%) sepia(100%) hue-rotate(309deg) contrast(270%)",
   water:
