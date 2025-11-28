@@ -33,7 +33,7 @@ const BattleScreen = ({
 }: BattleScreenProps) => {
   const [menuState, setMenuState] = useState<MenuState>(MenuState.Main);
   const [hoveredMove, setHoveredMove] = useState<number>(0);
-  const animationTransition = { duration: 0.3, delay: 0, ease: "easeInOut" };
+  const animationTransition = { duration: 0.3, delay: 0};
 
   const getAttackAnimationConfig = () => {
     if (!isAnimationActive) {
