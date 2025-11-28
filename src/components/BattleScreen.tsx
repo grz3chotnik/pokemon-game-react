@@ -65,18 +65,21 @@ const BattleScreen = ({
       >
         end game
       </button>
-      {gameState.winnerPokemonName &&
-        (localStorage.removeItem("sessionID"),
-        (<h2>winner: {gameState.winnerPokemonName}</h2>),
-        (
+
+      {gameState.winnerPokemonName && (
+        <>
+          <h2>winner: {gameState.winnerPokemonName}</h2>{" "}
           <button
             onClick={() => {
+              localStorage.removeItem("sessionID");
               window.location.reload();
             }}
           >
             restart game
           </button>
-        ))}
+        </>
+      )}
+
       <div className="gamediv">
         <div className="playerArea">
           <PokemonInfo
