@@ -33,6 +33,7 @@ const BattleScreen = ({
 }: BattleScreenProps) => {
   const [menuState, setMenuState] = useState<MenuState>(MenuState.Main);
   const [hoveredMove, setHoveredMove] = useState<number>(0);
+  const animationTransition = { duration: 0.3, delay: 0, ease: "easeInOut" };
 
   const getAttackAnimationConfig = () => {
     if (!isAnimationActive) {
@@ -64,9 +65,18 @@ const BattleScreen = ({
       >
         end game
       </button>
-      {gameState.winnerPokemonName && (
-        <h2>winner: {gameState.winnerPokemonName}</h2>
-      )}
+      {gameState.winnerPokemonName &&
+        (localStorage.removeItem("sessionID"),
+        (<h2>winner: {gameState.winnerPokemonName}</h2>),
+        (
+          <button
+            onClick={() => {
+              window.location.reload();
+            }}
+          >
+            restart game
+          </button>
+        ))}
       <div className="gamediv">
         <div className="playerArea">
           <PokemonInfo
@@ -77,7 +87,7 @@ const BattleScreen = ({
           <div>
             <motion.div
               animate={getAttackAnimationConfig()}
-              transition={{ duration: 0.3, delay: 0, ease: "easeInOut" }}
+              transition={animationTransition}
             >
               <div className="playerLeftImage">
                 <img
@@ -111,7 +121,7 @@ const BattleScreen = ({
           <div>
             <motion.div
               animate={getAttackAnimationConfig()}
-              transition={{ duration: 0.3, delay: 0, ease: "easeInOut" }}
+              transition={animationTransition}
             >
               <div className="opponentImageContainer">
                 {!gameState?.opponent ? (

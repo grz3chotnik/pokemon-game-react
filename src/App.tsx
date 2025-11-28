@@ -47,14 +47,12 @@ export default function App() {
 
       if (data.id === "gameStateUpdate") {
         setGameState((prevState) => merge({}, prevState, data));
-        console.log(gameState);
       }
 
       if (data.id === "attackUpdate") {
         setGameState((prevState) => merge({}, prevState, data));
 
         handleAnimateAttack();
-        console.log(gameState);
       }
 
       if (data.id === "exit") {

@@ -244,30 +244,28 @@ wss.on("connection", (ws) => {
       client.send(JSON.stringify({ id: "moveType", type: attackType }));
     });
 
-    // console.log(whoseTurn)
-    //sending the update
-    clients.get(sessionID).send(
-      JSON.stringify({
-        id: "attackUpdate",
-        isPlayerTurn: whoseTurn === opponentID,
-        player: {
-          pokemonHp: gameState[sessionID].pokemonHp,
-        },
-        opponent: {
-          pokemonHp: gameState[opponentID].pokemonHp,
-        },
-      }),
-    );
+    const updateUsersData = (clientsSessionID: string) => {
+      return clientsSessionID === sessionID
+        ? {
+            id: "attackUpdate",
+            isPlayerTurn: whoseTurn === opponentID,
+            opponent: {
+              pokemonHp: gameState[opponentID].pokemonHp,
+            },
+          }
+        : {
+            id: "attackUpdate",
+            isPlayerTurn: whoseTurn !== opponentID,
+            player: {
+              pokemonHp: gameState[opponentID].pokemonHp,
+            },
+          };
+    };
 
-    clients.get(opponentID).send(
-      JSON.stringify({
-        id: "attackUpdate",
-        isPlayerTurn: whoseTurn !== opponentID,
-        player: {
-          pokemonHp: gameState[opponentID].pokemonHp,
-        },
-      }),
-    );
+    //sending the update for each client
+    clients.get(sessionID).send(JSON.stringify(updateUsersData(sessionID)));
+    clients.get(opponentID).send(JSON.stringify(updateUsersData(opponentID)));
+
     //if someone loses, send gameOver
     if (
       gameState[sessionID].pokemonHp === 0 ||
@@ -282,6 +280,7 @@ wss.on("connection", (ws) => {
         );
       });
       gameState = {};
+      clients.clear();
       return;
     }
   };
