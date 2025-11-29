@@ -19,4 +19,4 @@
 
 # LIVE DEMO
 
-[pokemongame.2004.lol](pokemongame.2004.lol)
+- live demo at https://pokemongame.2004.lol
