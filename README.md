@@ -16,3 +16,7 @@
 - WebSockets for multiplayer
 - Server written in node
 - All the pokemon data (images, statistics, moves) are from pokeAPI
+
+# LIVE DEMO
+
+[pokemongame.2004.lol](pokemongame.2004.lol)
