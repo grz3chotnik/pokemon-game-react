@@ -5,7 +5,7 @@ import BattleScreen from "./components/BattleScreen.tsx";
 import type { GameState, Move } from "./types/gameState.ts";
 
 export default function App() {
-  const WS_URL = import.meta.env.VITE_WS_URL || "wss://pokemon.2004.lol:8080";
+  const WS_URL = import.meta.env.VITE_WS_URL || "wss://pokemon.2004.lol";
   const [gameState, setGameState] = useState<GameState | null>(null);
   const [moveType, setMoveType] = useState<string>("");
   const [isAnimationActive, setIsAnimationActive] = useState(false);
