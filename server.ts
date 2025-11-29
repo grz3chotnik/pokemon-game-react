@@ -1,7 +1,8 @@
 import { WebSocketServer } from "ws";
 import { v4 as uuidv4 } from "uuid";
 import { ATTACK_TO_OPPONENT } from "./config/attackToOpponentMap";
-const wss = new WebSocketServer({ port: 8080 });
+const wss = new WebSocketServer({ port: 8080,
+  host: "0.0.0.0" });
 const BALANCE = 10;
 const INACTIVITY_TIMER_VALUE = 120000;
 let whoseTurn;
