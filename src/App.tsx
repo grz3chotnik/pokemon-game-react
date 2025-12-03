@@ -70,6 +70,7 @@ export default function App() {
       console.error("WebSocket error:", error);
     };
 
+
     return () => {
       if (wsClient.readyState === WebSocket.OPEN) {
         wsClient.close();
@@ -88,7 +89,7 @@ export default function App() {
   };
 
   if (!gameState) {
-    return "loading state";
+    return <p className="loading">loading...</p>;
   }
 
   return (

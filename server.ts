@@ -1,11 +1,10 @@
 import { WebSocketServer } from "ws";
 import { v4 as uuidv4 } from "uuid";
 import { ATTACK_TO_OPPONENT } from "./config/attackToOpponentMap";
-const wss = new WebSocketServer({ port: 8080,
-  host: "0.0.0.0" });
+const wss = new WebSocketServer({ port: 8080, host: "0.0.0.0" });
 const BALANCE = 10;
-const INACTIVITY_TIMER_VALUE = 120000;
-let whoseTurn;
+const INACTIVITY_TIMER_VALUE = 60000; // value in miliseconds. ( 1 minute )
+let whoseTurn: string;
 const enum WSMessage {
   Join = "join",
   Attack = "attack",
@@ -50,6 +49,7 @@ const resetInactivityTimer = () => {
   clearTimeout(inactivityTimer);
   inactivityTimer = setTimeout(() => {
     gameState = {};
+    clients.clear();
   }, INACTIVITY_TIMER_VALUE);
 };
 
@@ -71,6 +71,9 @@ wss.on("connection", (ws) => {
       (element) => element !== clientSessionID,
     )[0];
     if (clientSessionID) {
+      if (opponentID === undefined) {
+        return;
+      }
       clients.set(clientSessionID, ws);
       clients.get(clientSessionID).send(
         JSON.stringify({
@@ -282,6 +285,8 @@ wss.on("connection", (ws) => {
       });
       gameState = {};
       clients.clear();
+      console.log("game endd");
+      whoseTurn = undefined;
       return;
     }
   };

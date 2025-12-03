@@ -6,7 +6,7 @@ export interface Move {
 
 export interface GameState {
   isPlayerTurn: boolean;
-  winnerPokemonName: boolean;
+  winnerPokemonName: string;
   player: {
     name: string;
     pokemonBackImageURL: string;
