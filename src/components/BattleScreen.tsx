@@ -1,6 +1,6 @@
 import "../App.css";
 import PokemonInfo from "./PokemonInfo.tsx";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { motion } from "motion/react";
 import { MOVE_ANIMATION } from "../../config/moveAnimationMap.ts";
 import { FILTER_EFFECT } from "../../config/filterEffectMap.ts";
@@ -28,12 +28,18 @@ const BattleScreen = ({
   onAttackEnemy,
   handleExit,
   moveType,
-  onAnimateAttack,
   isAnimationActive,
 }: BattleScreenProps) => {
   const [menuState, setMenuState] = useState<MenuState>(MenuState.Main);
   const [hoveredMove, setHoveredMove] = useState<number>(0);
-  const animationTransition = { duration: 0.3, delay: 0};
+  const animationTransition = { duration: 0.3, delay: 0 };
+
+  useEffect(() => {
+    if (gameState.winnerPokemonName !== undefined) {
+      localStorage.clear();
+      console.log("reset the localstorage");
+    }
+  }, [gameState.winnerPokemonName]);
 
   const getAttackAnimationConfig = () => {
     if (!isAnimationActive) {
@@ -52,170 +58,194 @@ const BattleScreen = ({
   const handleAttack = (moveName: Move["name"]) => {
     setMenuState(MenuState.Main);
     onAttackEnemy(moveName);
-    onAnimateAttack();
   };
 
-  return (
-    <div className="maindiv">
-      <button
-        className="endgamebutton"
-        onClick={() => {
-          handleExit();
-        }}
-      >
-        end game
-      </button>
-
-      {gameState.winnerPokemonName && (
-        <>
-          <h2>winner: {gameState.winnerPokemonName}</h2>{" "}
-          <button
-            onClick={() => {
-              localStorage.removeItem("sessionID");
-              window.location.reload();
-            }}
-          >
-            restart game
-          </button>
-        </>
-      )}
-
-      <div className="gamediv">
-        <div className="playerArea">
-          <PokemonInfo
-            name={gameState?.opponent?.name}
-            hp={gameState?.opponent?.pokemonHp}
-            maxHP={gameState?.opponent?.pokemonMaxHp}
-          />
-          <div>
-            <motion.div
-              animate={getAttackAnimationConfig()}
-              transition={animationTransition}
-            >
-              <div className="playerLeftImage">
-                <img
-                  src={gameState?.player.pokemonBackImageURL}
-                  height="350px"
-                  width="350px"
-                  alt="pokemon1"
-                  style={{
-                    filter:
-                      isAnimationActive && !gameState.isPlayerTurn
-                        ? FILTER_EFFECT[moveType]
-                        : undefined,
-                  }}
-                />
-
-                {!gameState.isPlayerTurn && (
-                  <img
-                    src={
-                      isAnimationActive ? MOVE_ANIMATION[moveType] : undefined
-                    }
-                    height="200px"
-                    className="playerAttackAnimation"
-                  />
-                )}
-              </div>
-            </motion.div>
-          </div>
-        </div>
-
-        <div className="opponentArea">
-          <div>
-            <motion.div
-              animate={getAttackAnimationConfig()}
-              transition={animationTransition}
-            >
-              <div className="opponentImageContainer">
-                {!gameState?.opponent ? (
-                  <p>loading...</p>
-                ) : (
-                  <img
-                    src={gameState?.opponent.pokemonImageURL}
-                    height="350px"
-                    width="350px"
-                    alt="Opponent Image"
-                    style={
-                      isAnimationActive && gameState.isPlayerTurn
-                        ? { filter: FILTER_EFFECT[moveType] }
-                        : undefined
-                    }
-                  />
-                )}
-                {gameState.isPlayerTurn && (
-                  <img
-                    src={
-                      isAnimationActive ? MOVE_ANIMATION[moveType] : undefined
-                    }
-                    height="200px"
-                    className="playerAttackAnimation"
-                  />
-                )}
-              </div>
-            </motion.div>
-          </div>
-
-          <PokemonInfo
-            name={gameState?.player.name}
-            hp={gameState?.player.pokemonHp}
-            maxHP={gameState?.player.pokemonMaxHp}
-          />
-        </div>
+  if (!gameState.opponent) {
+    return (
+      <div className="loading">
+        Please open {window.location.href} <br /> on another device, or in an
+        Incognito tab
       </div>
+    );
+  }
 
-      <div className="infodiv">
-        {menuState === MenuState.Main && (
+  if (gameState.opponent) {
+    return (
+      <div className="maindiv">
+        <button
+          className="endgamebutton"
+          onClick={() => {
+            handleExit();
+            localStorage.removeItem("sessionID");
+            window.location.reload();
+          }}
+        >
+          end game
+        </button>
+
+        {gameState.winnerPokemonName && (
           <>
-            <div className="text">what will {gameState.player.name} do? </div>
-            <div className="menu">
-              <button
-                onClick={() => setMenuState(MenuState.Moves)}
-                className="attackbutton"
+            <h2>winner: {gameState.winnerPokemonName}</h2>
+          </>
+        )}
+
+        <div className="gamediv">
+          <div className="playerArea">
+            <PokemonInfo
+              name={gameState?.opponent?.name}
+              hp={gameState?.opponent?.pokemonHp}
+              maxHP={gameState?.opponent?.pokemonMaxHp}
+            />
+            <div>
+              <motion.div
+                animate={getAttackAnimationConfig()}
+                transition={animationTransition}
               >
-                FIGHT
-              </button>
-              <button disabled className="attackbutton">
-                BAG
-              </button>
-              <button disabled className="attackbutton">
-                POKEMON
-              </button>
-              <button disabled className="attackbutton">
-                RUN
-              </button>
-            </div>
-          </>
-        )}
+                {gameState.winnerPokemonName !== gameState.opponent.name ? (
+                  <div className="playerLeftImage">
+                    <img
+                      src={gameState?.player.pokemonBackImageURL}
+                      height="350px"
+                      width="350px"
+                      alt="pokemon1"
+                      style={{
+                        filter:
+                          isAnimationActive && !gameState.isPlayerTurn
+                            ? FILTER_EFFECT[moveType]
+                            : undefined,
+                      }}
+                    />
 
-        {menuState === MenuState.Moves && (
-          <>
-            <div className="moves">
-              {gameState.player.pokemonMoves.map((move, index) => (
+                    {!gameState.isPlayerTurn && (
+                      <img
+                        src={
+                          isAnimationActive
+                            ? MOVE_ANIMATION[moveType]
+                            : undefined
+                        }
+                        height="200px"
+                        className="playerAttackAnimation"
+                      />
+                    )}
+                  </div>
+                ) : (
+                  <div className="playerLeftImage"></div>
+                )}
+              </motion.div>
+            </div>
+          </div>
+
+          <div className="opponentArea">
+            <div>
+              <motion.div
+                animate={getAttackAnimationConfig()}
+                transition={animationTransition}
+              >
+                {gameState.winnerPokemonName !== gameState.player.name ? (
+                  <div className="opponentImageContainer">
+                    {!gameState?.opponent ? (
+                      <p>loading...</p>
+                    ) : (
+                      <img
+                        src={gameState?.opponent.pokemonImageURL}
+                        height="350px"
+                        width="350px"
+                        alt="Opponent Image"
+                        style={
+                          isAnimationActive && gameState.isPlayerTurn
+                            ? { filter: FILTER_EFFECT[moveType] }
+                            : undefined
+                        }
+                      />
+                    )}
+                    {gameState.isPlayerTurn && (
+                      <img
+                        src={
+                          isAnimationActive
+                            ? MOVE_ANIMATION[moveType]
+                            : undefined
+                        }
+                        height="200px"
+                        className="playerAttackAnimation"
+                      />
+                    )}
+                  </div>
+                ) : (
+                  <div></div>
+                )}
+              </motion.div>
+            </div>
+
+            <PokemonInfo
+              name={gameState?.player.name}
+              hp={gameState?.player.pokemonHp}
+              maxHP={gameState?.player.pokemonMaxHp}
+            />
+          </div>
+        </div>
+
+        <div className="infodiv">
+          {menuState === MenuState.Main && (
+            <>
+              <div className="text">what will {gameState.player.name} do? </div>
+              <div className="menu">
                 <button
-                  key={move.name}
-                  disabled={gameState.isPlayerTurn}
+                  onClick={() => setMenuState(MenuState.Moves)}
                   className="attackbutton"
-                  onClick={() => handleAttack(move.name)}
-                  onMouseEnter={() => {
-                    setHoveredMove(index);
-                  }}
+                  disabled={
+                    !gameState.opponent ||
+                    gameState.winnerPokemonName !== undefined
+                  }
                 >
-                  {move.name.toUpperCase()}
+                  FIGHT
                 </button>
-              ))}
-            </div>
-            <div className="movesstats">
-              <p>Power: {gameState.player.pokemonMoves[hoveredMove]?.power}</p>
-              <p>
-                TYPE/
-                {gameState.player.pokemonMoves[hoveredMove]?.type.toUpperCase()}
-              </p>
-            </div>
-          </>
-        )}
+                <button disabled className="attackbutton">
+                  BAG
+                </button>
+                <button disabled className="attackbutton">
+                  POKEMON
+                </button>
+                <button disabled className="attackbutton">
+                  RUN
+                </button>
+              </div>
+            </>
+          )}
+
+          {menuState === MenuState.Moves && (
+            <>
+              <div className="moves">
+                {gameState.player.pokemonMoves.map((move, index) => (
+                  <button
+                    key={move.name}
+                    disabled={gameState.isPlayerTurn}
+                    className="attackbutton"
+                    onClick={() => handleAttack(move.name)}
+                    onMouseEnter={() => {
+                      setHoveredMove(index);
+                    }}
+                  >
+                    {move.name.toUpperCase()}
+                  </button>
+                ))}
+              </div>
+              <div className="movesstats">
+                <p>
+                  Power: {gameState.player.pokemonMoves[hoveredMove]?.power}
+                </p>
+                <p>
+                  TYPE/
+                  {gameState.player.pokemonMoves[
+                    hoveredMove
+                  ]?.type.toUpperCase()}
+                </p>
+              </div>
+            </>
+          )}
+        </div>
       </div>
-    </div>
-  );
+    );
+  }
 };
 
 export default BattleScreen;
