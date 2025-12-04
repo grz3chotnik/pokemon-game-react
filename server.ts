@@ -5,6 +5,8 @@ const wss = new WebSocketServer({ port: 8080, host: "0.0.0.0" });
 const BALANCE = 10;
 const INACTIVITY_TIMER_VALUE = 60000; // value in miliseconds. ( 1 minute )
 let whoseTurn: string;
+let oldSessionID = null;
+let oldOpponentSessionID = null;
 const enum WSMessage {
   Join = "join",
   Attack = "attack",
@@ -70,10 +72,12 @@ wss.on("connection", (ws) => {
     const opponentID = Object.keys(gameState).filter(
       (element) => element !== clientSessionID,
     )[0];
-    if (clientSessionID) {
+
+    if (clientSessionID && gameState[clientSessionID]) {
       if (opponentID === undefined) {
         return;
       }
+
       clients.set(clientSessionID, ws);
       clients.get(clientSessionID).send(
         JSON.stringify({
@@ -107,7 +111,11 @@ wss.on("connection", (ws) => {
       );
       return;
     }
-    if (!clientSessionID) {
+
+    if (
+      !clientSessionID ||
+      (clientSessionID && gameState[clientSessionID] == undefined)
+    ) {
       clients.set(sessionID, ws);
 
       gameState[sessionID] = {
@@ -283,6 +291,8 @@ wss.on("connection", (ws) => {
           }),
         );
       });
+      oldSessionID = sessionID;
+      oldOpponentSessionID = opponentID;
       gameState = {};
       clients.clear();
       console.log("game endd");
