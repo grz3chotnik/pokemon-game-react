@@ -5,8 +5,6 @@ const wss = new WebSocketServer({ port: 8080, host: "0.0.0.0" });
 const BALANCE = 10;
 const INACTIVITY_TIMER_VALUE = 60000; // value in miliseconds. ( 1 minute )
 let whoseTurn: string;
-let oldSessionID = null;
-let oldOpponentSessionID = null;
 const enum WSMessage {
   Join = "join",
   Attack = "attack",
@@ -250,8 +248,6 @@ wss.on("connection", (ws) => {
 
     gameState[opponentID].pokemonHp = updatedPokemonHp;
 
-    console.log("[updatedPokemonHp]", updatedPokemonHp);
-
     wss.clients.forEach((client) => {
       client.send(JSON.stringify({ id: "moveType", type: attackType }));
     });
@@ -291,11 +287,8 @@ wss.on("connection", (ws) => {
           }),
         );
       });
-      oldSessionID = sessionID;
-      oldOpponentSessionID = opponentID;
       gameState = {};
       clients.clear();
-      console.log("game endd");
       whoseTurn = undefined;
       return;
     }

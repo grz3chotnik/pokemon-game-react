@@ -37,7 +37,6 @@ const BattleScreen = ({
   useEffect(() => {
     if (gameState.winnerPokemonName !== undefined) {
       localStorage.clear();
-      console.log("reset the localstorage");
     }
   }, [gameState.winnerPokemonName]);
 
