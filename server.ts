@@ -70,10 +70,12 @@ wss.on("connection", (ws) => {
     const opponentID = Object.keys(gameState).filter(
       (element) => element !== clientSessionID,
     )[0];
-    if (clientSessionID) {
+
+    if (clientSessionID && gameState[clientSessionID]) {
       if (opponentID === undefined) {
         return;
       }
+
       clients.set(clientSessionID, ws);
       clients.get(clientSessionID).send(
         JSON.stringify({
@@ -107,7 +109,11 @@ wss.on("connection", (ws) => {
       );
       return;
     }
-    if (!clientSessionID) {
+
+    if (
+      !clientSessionID ||
+      (clientSessionID && gameState[clientSessionID] == undefined)
+    ) {
       clients.set(sessionID, ws);
 
       gameState[sessionID] = {
@@ -242,8 +248,6 @@ wss.on("connection", (ws) => {
 
     gameState[opponentID].pokemonHp = updatedPokemonHp;
 
-    console.log("[updatedPokemonHp]", updatedPokemonHp);
-
     wss.clients.forEach((client) => {
       client.send(JSON.stringify({ id: "moveType", type: attackType }));
     });
@@ -285,7 +289,6 @@ wss.on("connection", (ws) => {
       });
       gameState = {};
       clients.clear();
-      console.log("game endd");
       whoseTurn = undefined;
       return;
     }
